@@ -1,0 +1,10 @@
+pandas
+numpy
+pint
+plotly
+cufflinks
+quilt
+jupyterlab_launcher
+# what are these for?
+traitlets
+vdom
