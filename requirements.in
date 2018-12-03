@@ -4,6 +4,7 @@ pint
 plotly
 cufflinks
 quilt
+jupyterlab
 jupyterlab_launcher
 # what are these for?
 traitlets
