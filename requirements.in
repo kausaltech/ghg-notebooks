@@ -8,3 +8,4 @@ jupyterlab_launcher
 # what are these for?
 traitlets
 vdom
+certifi==2018.8.24 # workaround for build problem
