@@ -8,7 +8,7 @@ appdirs==1.4.3            # via quilt
 attrs==18.2.0             # via fiona
 backcall==0.1.0           # via ipython
 bleach==3.0.2             # via nbconvert
-certifi==2018.8.24
+certifi
 chardet==3.0.4            # via requests
 click-plugins==1.0.4      # via fiona
 click==7.0                # via click-plugins, cligj, fiona
