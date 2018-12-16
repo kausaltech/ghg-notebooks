@@ -7,8 +7,6 @@ import pandas as pd
 import numpy as np
 import requests_cache
 
-requests_cache.install_cache()
-
 
 def _load_xlsx_url(url):
     resp = requests.get(url)
@@ -284,3 +282,23 @@ def get_car_unit_emissions():
     index, series = zip(*[((i, j), VALUES[i][j]) for i in VALUES for j in VALUES[i]])
     index = pd.MultiIndex.from_tuples(index, names=['power_source', 'road_type'])
     return pd.DataFrame(list(series), index=index, columns=['emission_factor'])
+
+
+if __name__ == '__main__':
+    import quilt
+
+    USER = 'jyrjola'
+    PACKAGE_BASE = 'lipasto'
+
+    def build_and_push(package, df):
+        quilt.build('%s/%s/%s' % (USER, PACKAGE_BASE, package), df)
+        quilt.push('%s/%s/%s' % (USER, PACKAGE_BASE, package), is_public=True)
+
+    df = get_car_unit_emissions().reset_index()
+    build_and_push('car_unit_emissions', df)
+
+    df = get_liisa_muni_data().reset_index()
+    build_and_push('emissions_by_municipality', df)
+
+    df = get_mileage_per_engine_type().reset_index()
+    build_and_push('mileage_per_engine_type', df)

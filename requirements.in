@@ -8,6 +8,9 @@ jupyterlab
 jupyterlab_launcher
 traitlets
 vdom
-certifi==2018.8.24 # workaround for build problem
+certifi==2018.8.24 # workaround for a build problem
 ipywidgets
 matplotlib
+geopandas
+python-dateutil
+scipy
