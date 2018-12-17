@@ -27,7 +27,10 @@ def _parse_csv(path):
 
             data['Rakennustyyppi'] = current_type
             for key, val in data.items():
-                if key in ('Vuosi', 'Rakennustyyppi'):
+                if key == 'Rakennustyyppi':
+                    continue
+                if key == 'Vuosi':
+                    data[key] = int(val)
                     continue
                 if val in ('..', '-'):
                     data[key] = pd.np.nan
