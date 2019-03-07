@@ -83,3 +83,9 @@ class FingridLast24hTask(FingridTask, luigi.Task):
         end_time = datetime.now()
         start_time = end_time - timedelta(days=1)
         self.fingrid_init(start_time, end_time)
+
+
+class FingridLast24hUpdateAllTask(luigi.Task):
+    def run(self):
+        for measurement_name in fingrid.MEASUREMENTS.keys():
+            yield FingridLast24hTask(measurement_name=measurement_name)
