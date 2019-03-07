@@ -1,3 +1,6 @@
 -r requirements.in
 luigi[toml]
 influxdb
+tzlocal
+sqlalchemy
+apscheduler
