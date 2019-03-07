@@ -72,3 +72,14 @@ class FingridMonthlyTask(FingridTask, luigi.Task):
         # First of next month
         end_time = (start_time + timedelta(days=32)).replace(day=1)
         self.fingrid_init(start_time, end_time)
+
+
+class FingridLast24hTask(FingridTask, luigi.Task):
+    measurement_name = luigi.ChoiceParameter(choices=fingrid.MEASUREMENTS.keys())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        end_time = datetime.now()
+        start_time = end_time - timedelta(days=1)
+        self.fingrid_init(start_time, end_time)
