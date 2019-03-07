@@ -86,6 +86,9 @@ class FingridLast24hTask(FingridTask, luigi.Task):
 
 
 class FingridLast24hUpdateAllTask(luigi.Task):
+    def complete(self):
+        return False
+
     def run(self):
         for measurement_name in fingrid.MEASUREMENTS.keys():
             yield FingridLast24hTask(measurement_name=measurement_name)
