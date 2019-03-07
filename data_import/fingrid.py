@@ -109,13 +109,14 @@ MEASUREMENTS = {
         "variable_id": 191,
         "interval": 3 * 60,  # 3 minutes
     },
-    "condensing_power_generation_3m": {
-        "unit": "MW",
-        "quantity": "power",
-        "start_date": date(2011, 1, 1),
-        "variable_id": 189,
-        "interval": 3 * 60,  # 3 minutes
-    },
+    # This one not in use anymore
+    # "condensing_power_generation_3m": {
+    #     "unit": "MW",
+    #     "quantity": "power",
+    #     "start_date": date(2011, 1, 1),
+    #     "variable_id": 189,
+    #     "interval": 3 * 60,  # 3 minutes
+    #},
     "nuclear_power_generation_3m": {
         "unit": "MW",
         "quantity": "power",
