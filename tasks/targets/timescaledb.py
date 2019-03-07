@@ -51,6 +51,7 @@ class TimescaleDBTarget(luigi.Target):
             if not engine.dialect.has_table(con, table_name):
                 table.create(self.engine)
                 con.execute("SELECT create_hypertable('%s', 'time')" % table_name).fetchall()
+                con.execute("SELECT set_chunk_time_interval('%s', interval '1 month')" % table_name).fetchall()
 
         return table
 
