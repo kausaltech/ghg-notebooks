@@ -137,6 +137,13 @@ MEASUREMENTS = {
         "variable_id": 178,
         "interval": 3 * 60,  # 3 minutes
     },
+    "solar_power_generation_estimate": {
+        "unit": "MWh",
+        "quantity": "energy",
+        "start_date": date(2017, 2, 24),
+        "variable_id": 248,
+        "interval": 3600,
+    },
 }
 
 # Make sure variables are unique
