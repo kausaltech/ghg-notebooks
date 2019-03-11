@@ -15,3 +15,7 @@ geopandas
 python-dateutil
 scipy
 environs
+pytz
+-e git+https://github.com/hgrecco/pint-pandas#egg=pint-pandas
+psycopg2-binary
+jupytext
