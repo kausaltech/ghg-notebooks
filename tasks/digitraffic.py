@@ -150,3 +150,32 @@ class DigitrafficVehicleCountDaily(luigi.Task):
             if task.complete():
                 completed.append(date)
         return completed
+
+
+class DigitrafficVehicleCountAllSelected(luigi.Task):
+    station_file = luigi.Parameter()
+    date = luigi.DateParameter()
+
+    def requires(self):
+        tasks = []
+        with open(self.station_file, 'r') as f:
+            for line in f.readlines():
+                station = line.strip()
+                get_station_by_name(station)
+                tasks.append(DigitrafficVehicleCountDaily(station_name=station, date=self.date))
+        return tasks
+
+    def run(self):
+        pass
+
+    def complete(self):
+        return all([task.complete() for task in self.requires()])
+
+    @classmethod
+    def bulk_complete(cls, parameter_tuples):
+        completed = []
+        for date in parameter_tuples:
+            task = cls(date=date)
+            if task.complete():
+                completed.append(date)
+        return completed
