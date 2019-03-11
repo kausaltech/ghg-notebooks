@@ -74,7 +74,8 @@ class DigitrafficVehicleCountRaw(luigi.Task):
 
 class DigitrafficTMSStations(luigi.Task):
     def output(self):
-        return luigi.LocalTarget('data/digitraffic_stations.json')
+        path = 'digitraffic/lam_stations.json'
+        return luigi.LocalTarget(os.path.join(settings.DATA_DIR, path))
 
     def run(self):
         stations = digitraffic.get_tms_stations()
