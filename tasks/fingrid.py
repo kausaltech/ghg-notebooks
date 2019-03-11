@@ -16,8 +16,9 @@ logger.setLevel(logging.INFO)
 if not settings.FINGRID_API_KEY:
     raise Exception("FINGRID_API_KEY not specified in settings")
 
-if not settings.QUILT_USER:
-    raise Exception("QUILT_USER not specified in settings")
+
+class FingridDBTarget(TimescaleDBTarget):
+    pass
 
 
 class FingridTask:
@@ -34,12 +35,11 @@ class FingridTask:
         self.end_time -= timedelta(seconds=1)
 
     def output(self):
-        return TimescaleDBTarget(
-            settings.POSTGRESQL_DSN, measurement_name='fingrid_%s' % self.measurement_name,
-            value_column_name=self.meta_data['quantity'],
-            start_time=self.start_time, end_time=self.end_time,
-            interval=self.meta_data['interval']
-        )
+        target = FingridDBTarget(settings.POSTGRESQL_DSN, start_time=self.start_time, end_time=self.end_time)
+        target.measurement_name = 'fingrid_%s' % self.measurement_name
+        target.value_columns = [(self.meta_data['quantity'], float)]
+        target.interval = self.meta_data['interval']
+        return target
 
     def run(self):
         fingrid.set_api_key(settings.FINGRID_API_KEY)

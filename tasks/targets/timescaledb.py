@@ -12,13 +12,22 @@ class TimescaleDBTarget(luigi.Target):
     _engine_dict = {}  # dict of sqlalchemy engine instances
     Connection = collections.namedtuple("Connection", "engine pid")
 
-    def __init__(self, connection_dsn, measurement_name, value_column_name, start_time, end_time, interval):
+    # Override these in a subclass
+    measurement_name = None
+    value_columns = None
+    interval = None  # in seconds
+    location_column = None  # optional
+
+    def __init__(self, connection_dsn, start_time, end_time, locations=None):
         self.connection_dsn = connection_dsn
-        self.measurement_name = measurement_name
         self.start_time = start_time.astimezone(pytz.utc)
         self.end_time = end_time.astimezone(pytz.utc)
-        self.value_column_name = value_column_name
-        self.interval = interval
+        self.locations = locations
+
+    def _validate(self):
+        assert self.measurement_name and isinstance(self.measurement_name, str)
+        assert self.location_column is None or isinstance(self.location_column, str)
+        assert isinstance(self.interval, int) and self.interval > 0
 
     @property
     def engine(self):
@@ -32,9 +41,17 @@ class TimescaleDBTarget(luigi.Target):
         conn = TimescaleDBTarget._engine_dict.get(self.connection_dsn)
         if not conn or conn.pid != pid:
             # create and reset connection
-            engine = sqlalchemy.create_engine(self.connection_dsn, use_batch_mode=True, echo=False)
+            self._validate()
+            engine = sqlalchemy.create_engine(self.connection_dsn, use_batch_mode=True)
             TimescaleDBTarget._engine_dict[self.connection_dsn] = self.Connection(engine, pid)
         return TimescaleDBTarget._engine_dict[self.connection_dsn].engine
+
+    def python_type_to_sqlalchemy(self, klass):
+        if klass == int:
+            return sqlalchemy.Integer
+        elif klass == float:
+            return sqlalchemy.Float
+        raise Exception("Invalid type: %s" % klass)
 
     def get_table(self):
         Column = sqlalchemy.Column
@@ -42,28 +59,46 @@ class TimescaleDBTarget(luigi.Target):
 
         engine = self.engine
         metadata = sqlalchemy.MetaData(engine)
-        table = sqlalchemy.Table(
-            table_name, metadata,
-            Column('time', sqlalchemy.TIMESTAMP(timezone=True), nullable=False, unique=True),
-            Column(self.value_column_name, sqlalchemy.Float, nullable=False),
-        )
+        cols = [Column(c[0], self.python_type_to_sqlalchemy(c[1]), nullable=False) for c in self.value_columns]
+        if self.location_column:
+            cols.insert(0, Column(self.location_column, sqlalchemy.String, nullable=False))
+            cols.append(sqlalchemy.UniqueConstraint('time', self.location_column))
+            time_col = Column('time', sqlalchemy.TIMESTAMP(timezone=True), nullable=False)
+        else:
+            time_col = Column('time', sqlalchemy.TIMESTAMP(timezone=True), nullable=False, unique=True)
+
+        table = sqlalchemy.Table(table_name, metadata, time_col, *cols)
+
         with engine.begin() as con:
             if not engine.dialect.has_table(con, table_name):
                 table.create(self.engine)
-                con.execute("SELECT create_hypertable('%s', 'time')" % table_name).fetchall()
+                if self.location_column:
+                    ht_args = "'%s', 'time', '%s', 2" % (table_name, self.location_column)
+                else:
+                    ht_args = "'%s', 'time'" % table_name
+                con.execute("SELECT create_hypertable(%s)" % ht_args).fetchall()
+                if self.location_column:
+                    con.execute("CREATE INDEX ON %s (%s, time DESC)" % (table_name, self.location_column))
                 con.execute("SELECT set_chunk_time_interval('%s', interval '1 month')" % table_name).fetchall()
 
         return table
 
     def exists(self):
         table = self.get_table()
+
+        conditions = [table.c.time >= self.start_time, table.c.time <= self.end_time]
+        if self.locations:
+            conditions.append(getattr(table.c, self.location_column).in_(self.locations))
+            nr_locations = len(self.locations)
+        else:
+            nr_locations = 1
         sql = sqlalchemy.select([sqlalchemy.func.count(table.c.time)])\
-            .where(sqlalchemy.and_(
-                table.c.time >= self.start_time, table.c.time <= self.end_time
-            ))
+            .where(sqlalchemy.and_(*conditions))
+
         with self.engine.connect() as con:
             row_count = con.execute(sql).fetchone()[0]
         time_slots = int((self.end_time - self.start_time) / timedelta(seconds=self.interval))
+        time_slots *= nr_locations
         # Allow 1% of the samples to go missing (due to misc. weirdness)
         if row_count < int(0.99 * time_slots):
             return False
@@ -73,19 +108,26 @@ class TimescaleDBTarget(luigi.Target):
         df = df.copy()
         df.index = df.index.tz_convert('UTC')
         df.index.name = 'time'
-        assert len(df.columns) == 1
-        column_map = {
-            df.columns[0]: self.value_column_name,
-        }
-        rows = df.rename(columns=column_map).reset_index().to_dict('records')
+
+        value_column_set = {x[0] for x in self.value_columns}
+        location_column_set = set()
+        if self.location_column:
+            location_column_set.add(self.location_column)
+        assert set(df.columns) == value_column_set | location_column_set
+
+        rows = df.reset_index().to_dict('records')
 
         table = self.get_table()
         stmt = insert(table)
+        index_elements = ['time']
+        if self.location_column:
+            index_elements.append(self.location_column)
+        update_set = {col_name: getattr(stmt.excluded, col_name) for col_name in value_column_set}
         # Do an UPSERT: If existing rows conflict, replace their values with
         # incoming data.
         stmt = stmt.on_conflict_do_update(
-            index_elements=['time'],
-            set_={self.value_column_name: getattr(stmt.excluded, self.value_column_name)}
+            index_elements=index_elements,
+            set_=update_set,
         )
         with self.engine.begin() as con:
             con.execute(stmt, rows)
