@@ -17,24 +17,34 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def get_selected_stations():
+stations_by_name = None
+
+
+def load_selected_stations():
+    global stations_by_name
+
+    if stations_by_name is not None:
+        return
+
     task = DigitrafficTMSStations()
     if not task.complete():
         task.run()
 
     with task.output().open('r') as in_file:
         stations = json.load(in_file)
+
+    stations_by_name = {s['name']: s for s in stations}
+
     return stations
 
 
 def get_station_by_name(station_name):
-    stations = get_selected_stations()
+    load_selected_stations()
 
-    filtered = list(filter(lambda x: x['name'] == station_name, stations))
-    if len(filtered) != 1:
-        station_names = ', '.join([x['name'] for x in stations])
+    if station_name not in stations_by_name:
+        station_names = ', '.join(sorted(stations_by_name.keys()))
         raise Exception('Invalid station name: %s\nChoices: %s' % (station_name, station_names))
-    return filtered[0]
+    return stations_by_name[station_name]
 
 
 class DigitrafficTarget(TimescaleDBTarget):
