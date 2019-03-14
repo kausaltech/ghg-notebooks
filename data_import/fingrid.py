@@ -33,6 +33,9 @@ def fingrid_api_get(variable_id, quantity, unit, time_interval, start_time, end_
     data = io.StringIO(resp.content.decode('utf-8'))
     df = pd.read_csv(data, header=0, parse_dates=['start_time', 'end_time'])
 
+    if len(df) == 0:
+        raise Exception("No rows returned")
+
     # Make sure end_time - start_time have all even intervals
     delta = (df['end_time'] - df['start_time']).unique()
     assert len(delta) == 1
@@ -66,12 +69,20 @@ def set_api_key(api_key):
 
 
 MEASUREMENTS = {
-    "electricity_consumption_hourly": {
+    "electricity_production_hourly": {
         "unit": "MWh",
         "quantity": "energy",
         "start_date": date(2004, 1, 1),
         "variable_id": 74,
         "interval": 3600,  # 1 hour
+    },
+    "electricity_production_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 192,
+        "interval": 3 * 60,  # 3 minutes
+        "max_value": 50000,
     },
     "electricity_consumption_3m": {
         "unit": "MW",
@@ -81,11 +92,46 @@ MEASUREMENTS = {
         "interval": 3 * 60,  # 3 minutes
         "max_value": 50000,
     },
-    "electricity_trade_russia_3m": {
+    "electricity_consumption_hourly": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2004, 1, 1),
+        "variable_id": 124,
+        "interval": 3600,
+    },
+    "electricity_net_export_russia_3m": {
         "unit": "MW",
         "quantity": "power",
         "start_date": date(2011, 1, 1),
         "variable_id": 195,
+        "interval": 3 * 60,  # 3 minutes
+    },
+    "electricity_net_export_se1_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 87,
+        "interval": 3 * 60,  # 3 minutes
+    },
+    "electricity_net_export_estlink_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 180,
+        "interval": 3 * 60,  # 3 minutes
+    },
+    "electricity_net_export_se3_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 89,
+        "interval": 3 * 60,  # 3 minutes
+    },
+    "electricity_net_export_no_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 187,
         "interval": 3 * 60,  # 3 minutes
     },
     "electricity_net_import": {
@@ -131,6 +177,20 @@ MEASUREMENTS = {
         "variable_id": 201,
         "interval": 3 * 60,  # 3 minutes
     },
+    "industrial_chp_electricity_generation_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 202,
+        "interval": 3 * 60,  # 3 minutes
+    },
+    "other_electricity_generation_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2011, 1, 1),
+        "variable_id": 205,
+        "interval": 3 * 60,  # 3 minutes
+    },
     "temperature_in_helsinki": {
         "unit": "C",
         "quantity": "temperature",
@@ -148,9 +208,12 @@ MEASUREMENTS = {
 }
 
 # Make sure variables are unique
-VARIABLES = [x['variable_id'] for x in MEASUREMENTS.values()]
-if len(VARIABLES) != len(set(VARIABLES)):
-    raise Exception("Duplicate variable ids")
+def _check_variable_uniqueness():
+    variables = [x['variable_id'] for x in MEASUREMENTS.values()]
+    if len(variables) != len(set(variables)):
+        raise Exception("Duplicate variable ids: %s" % sorted(variables))
+
+_check_variable_uniqueness()
 
 
 def get_measurements(measurement_name, start_time, end_time):
