@@ -92,3 +92,23 @@ class FingridLast24hUpdateAllTask(luigi.Task):
     def run(self):
         for measurement_name in fingrid.MEASUREMENTS.keys():
             yield FingridLast24hTask(measurement_name=measurement_name)
+
+
+class FingridMonthlyAllMeasurementsTask(luigi.Task):
+    month = luigi.MonthParameter()
+
+    def requires(self):
+        measurements = fingrid.MEASUREMENTS.items()
+        tasks = []
+        for name, m in measurements:
+            earliest_date = m.get('start_date')
+            if earliest_date and self.month < earliest_date:
+                continue
+            tasks.append(FingridMonthlyTask(month=self.month, measurement_name=name))
+        return tasks
+
+    def complete(self):
+        return all([task.complete() for task in self.requires()])
+
+    def run(self):
+        pass
