@@ -4,7 +4,8 @@ from datetime import timedelta
 
 import pytz
 import luigi
-import sqlalchemy
+import sqlalchemy as sa
+import pandas as pd
 from sqlalchemy.dialects.postgresql import insert
 
 
@@ -42,32 +43,32 @@ class TimescaleDBTarget(luigi.Target):
         if not conn or conn.pid != pid:
             # create and reset connection
             self._validate()
-            engine = sqlalchemy.create_engine(self.connection_dsn, use_batch_mode=True)
+            engine = sa.create_engine(self.connection_dsn, use_batch_mode=True)
             TimescaleDBTarget._engine_dict[self.connection_dsn] = self.Connection(engine, pid)
         return TimescaleDBTarget._engine_dict[self.connection_dsn].engine
 
     def python_type_to_sqlalchemy(self, klass):
         if klass == int:
-            return sqlalchemy.Integer
+            return sa.Integer
         elif klass == float:
-            return sqlalchemy.Float
+            return sa.Float
         raise Exception("Invalid type: %s" % klass)
 
     def get_table(self):
-        Column = sqlalchemy.Column
+        Column = sa.Column
         table_name = self.measurement_name
 
         engine = self.engine
-        metadata = sqlalchemy.MetaData(engine)
+        metadata = sa.MetaData(engine)
         cols = [Column(c[0], self.python_type_to_sqlalchemy(c[1]), nullable=False) for c in self.value_columns]
         if self.location_column:
-            cols.insert(0, Column(self.location_column, sqlalchemy.String, nullable=False))
-            cols.append(sqlalchemy.UniqueConstraint('time', self.location_column))
-            time_col = Column('time', sqlalchemy.TIMESTAMP(timezone=True), nullable=False)
+            cols.insert(0, Column(self.location_column, sa.String, nullable=False))
+            cols.append(sa.UniqueConstraint('time', self.location_column))
+            time_col = Column('time', sa.TIMESTAMP(timezone=True), nullable=False)
         else:
-            time_col = Column('time', sqlalchemy.TIMESTAMP(timezone=True), nullable=False, unique=True)
+            time_col = Column('time', sa.TIMESTAMP(timezone=True), nullable=False, unique=True)
 
-        table = sqlalchemy.Table(table_name, metadata, time_col, *cols)
+        table = sa.Table(table_name, metadata, time_col, *cols)
 
         with engine.begin() as con:
             if not engine.dialect.has_table(con, table_name):
@@ -92,17 +93,27 @@ class TimescaleDBTarget(luigi.Target):
             nr_locations = len(self.locations)
         else:
             nr_locations = 1
-        sql = sqlalchemy.select([sqlalchemy.func.count(table.c.time)])\
-            .where(sqlalchemy.and_(*conditions))
+        sql = sa.select([sa.func.count(table.c.time)])\
+            .where(sa.and_(*conditions))
 
         with self.engine.connect() as con:
             row_count = con.execute(sql).fetchone()[0]
+
         time_slots = int((self.end_time - self.start_time) / timedelta(seconds=self.interval))
         time_slots *= nr_locations
         # Allow 1% of the samples to go missing (due to misc. weirdness)
         if row_count < int(0.99 * time_slots):
             return False
         return True
+
+    def get_latest_row(self, before=None):
+        table = self.get_table()
+
+        query = table.select()
+        if before:
+            query = query.where(table.c.time < before)
+        res = query.order_by(sa.desc(table.c.time)).limit(1).execute()
+        return dict(res.fetchone())
 
     def write(self, df):
         df = df.copy()
@@ -131,3 +142,17 @@ class TimescaleDBTarget(luigi.Target):
         )
         with self.engine.begin() as con:
             con.execute(stmt, rows)
+
+    def read(self, before=None, after=None):
+        table = self.get_table()
+        query = table.select()
+        if before:
+            query = query.where(table.c.time <= before)
+        if after:
+            query = query.where(table.c.time >= after)
+        query = query.order_by(sa.desc(table.c.time))
+        with self.engine.connect() as con:
+            df = pd.read_sql(query, con, index_col='time')
+        df.index = pd.to_datetime(df.index, utc=True)
+
+        return df

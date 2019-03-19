@@ -5,9 +5,13 @@ from quilt.tools.store import PackageStore
 from quilt.tools.command import HTTPResponseException
 from utils.quilt import pint_df_to_quilt, quilt_to_pint_df
 
+import settings
+
 
 class QuiltDataframeTarget(luigi.Target):
     def __init__(self, package_name, sub_path, timestamp=None):
+        if '/' not in package_name:
+            package_name = '/'.join([settings.QUILT_USER, package_name])
         self.package_name = package_name
         try:
             quilt.install(self.package_name, force=True)
