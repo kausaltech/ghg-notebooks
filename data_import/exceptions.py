@@ -1,0 +1,2 @@
+class NoRowsReturned(Exception):
+    pass
