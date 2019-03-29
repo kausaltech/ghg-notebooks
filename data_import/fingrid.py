@@ -1,5 +1,5 @@
 import io
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timezone, date
 import logging
 
 import requests
@@ -146,7 +146,7 @@ MEASUREMENTS = {
         "variable_id": 187,
         "interval": THREE_MIN,
     },
-    "electricity_net_import_3m": {
+    "electricity_net_export_3m": {
         "unit": "MW",
         "quantity": "power",
         "start_date": date(2010, 11, 8),
@@ -208,6 +208,14 @@ MEASUREMENTS = {
         "start_date": date(2017, 2, 24),
         "variable_id": 248,
         "interval": HOURLY,
+    },
+    "condensing_power_generation_3m": {
+        "unit": "MW",
+        "quantity": "power",
+        "start_date": date(2010, 11, 8),
+        "end_date": date(2017, 9, 14),
+        "variable_id": 189,
+        "interval": 3 * 60,  # 3 minutes
     },
 }
 
