@@ -28,10 +28,6 @@ class FingridTask:
     def fingrid_init(self, start_time, end_time):
         self.meta_data = fingrid.get_measurement_meta_data(self.measurement_name)
 
-        earliest_time = datetime.combine(self.meta_data['start_date'], datetime.min.time())
-        if start_time < earliest_time:
-            raise Exception("Date interval before data start date (%s)" % self.meta_data['start_date'])
-
         local_tz = fingrid.LOCAL_TZ
         self.start_time = local_tz.localize(start_time)
         self.end_time = local_tz.localize(end_time)
@@ -44,8 +40,25 @@ class FingridTask:
         target.interval = self.meta_data['interval']
         return target
 
+    def complete(self):
+        local_tz = fingrid.LOCAL_TZ
+
+        end_date = self.meta_data.get('end_date')
+        if end_date:
+            last_time = local_tz.localize(datetime.combine(end_date, datetime.min.time()))
+            if self.end_time > last_time:
+                return True
+
+        return self.output().exists()
+
     def run(self):
         fingrid.set_api_key(settings.FINGRID_API_KEY)
+
+        local_tz = fingrid.LOCAL_TZ
+        earliest_time = local_tz.localize(datetime.combine(self.meta_data['start_date'], datetime.min.time()))
+        if self.start_time < earliest_time:
+            raise Exception("Date interval before data start date (%s)" % self.meta_data['start_date'])
+
         df = fingrid.get_measurements(self.measurement_name, self.start_time, self.end_time)
         target = self.output()
         target.write(df)
@@ -93,7 +106,11 @@ class FingridLast24hUpdateAllTask(luigi.Task):
         return False
 
     def run(self):
-        for measurement_name in fingrid.MEASUREMENTS.keys():
+        today = date.today()
+        for measurement_name, m in fingrid.MEASUREMENTS.items():
+            end_date = m.get('end_date')
+            if end_date and today > end_date:
+                continue
             yield FingridLast24hTask(measurement_name=measurement_name)
 
 
@@ -107,6 +124,11 @@ class FingridMonthlyAllMeasurementsTask(luigi.Task):
             earliest_date = m.get('start_date')
             if earliest_date and self.month < earliest_date:
                 continue
+
+            last_date = m.get('end_date')
+            if last_date and self.month > last_date:
+                continue
+
             tasks.append(FingridMonthlyTask(month=self.month, measurement_name=name))
         return tasks
 
@@ -119,6 +141,8 @@ class FingridMonthlyAllMeasurementsTask(luigi.Task):
 
 class FingridUpdateQuiltTask(luigi.Task):
     measurement_type = luigi.ChoiceParameter(choices=['power', 'temperature'])
+    no_push = luigi.BoolParameter()
+
     quilt_package_name = 'fingrid_realtime'
 
     def __init__(self, *args, **kwargs):
@@ -136,8 +160,8 @@ class FingridUpdateQuiltTask(luigi.Task):
         return [FingridMonthlyTask(month=self.last_month, measurement_name=name) for name, m in self.measurements]
 
     def output(self):
-        targets = self.requires()
-        latest_rows = (t.output().get_latest_row(before=self.end_time) for t in targets)
+        inputs = self.requires()
+        latest_rows = (t.output().get_latest_row(before=self.end_time) for t in inputs)
         latest_ts = max((r['time'] for r in latest_rows))
         target = QuiltDataframeTarget(self.quilt_package_name, self.measurement_type, timestamp=latest_ts)
         return target
@@ -170,7 +194,8 @@ class FingridUpdateQuiltTask(luigi.Task):
         out.index = pd.to_datetime(df.index, utc=True).tz_convert('Europe/Helsinki')
 
         target.update(out)
-        target.push()
+        if not self.no_push:
+            target.push()
 
 
 class FingridUpdateQuiltHourlyTask(FingridUpdateQuiltTask):
