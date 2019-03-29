@@ -1,5 +1,10 @@
+from datetime import timedelta
+import pytz
 import pandas as pd
 import pintpandas  # noqa
+
+
+LOCAL_TZ = pytz.timezone('Europe/Helsinki')
 
 
 def _determine_fuel_mapping(df):
@@ -118,5 +123,70 @@ def get_district_heating_fuel_stats(include_units=False):
 
     if include_units:
         df.energy = df.energy.astype('pint[GWh]')
+
+    return df
+
+
+def get_electricity_production_hourly_data(include_units=False):
+    df = pd.read_excel('tuntidata_2017.xlsx', header=0)
+    df['time'] = (pd.to_datetime(df[['Year', 'Month', 'Day', 'Hour']]) - timedelta(hours=3))
+    df.set_index('time', inplace=True)
+    df.index = df.index.tz_localize(pytz.utc).tz_convert(LOCAL_TZ)
+    df.drop(columns=['Year', 'Month', 'Day', 'Hour', 'Week'], inplace=True)
+    for col in list(df.columns):
+        if 'Unnamed' in col:
+            df.drop(columns=[col], inplace=True)
+            continue
+        if include_units:
+            df[col] = df[col].astype('pint[MWh]')
+        df.rename(columns={col: col.split('\n')[1]}, inplace=True)
+    return df
+
+
+def get_electricity_monthly_data(include_units=False):
+    df = pd.read_excel(
+        'data/a_Electricity_netproduction_imports_and_exports_(GWh)_in_Finland.xlsx',
+        header=[4, 5], index_col=[0, 1, 2, 3]
+    )
+    df = df.T.iloc[2:].copy()
+    df.index = pd.to_datetime(df.index.to_series().apply(lambda x: '%s %s' % (x[1], x[0])))
+    df.index = df.index
+
+    # Drop columns with all NaNs
+    df = df.dropna(axis=1, how='all')
+
+    # Rename columns to a more usable format
+    df.columns = df.columns.to_flat_index()
+    col_names = ['/'.join([x for x in y if isinstance(x, str) and x.strip()]) for y in df.columns.to_list()]
+    df.columns = pd.Index(col_names)
+    # Fix one left import artefact
+    df.rename(columns={'TOTAL SUPPLY/Russia': 'TOTAL SUPPLY'}, inplace=True)
+
+    if include_units:
+        for col_name in df.columns:
+            df[col_name] = df[col_name].astype('pint[GWh]')
+
+    return df
+
+
+def get_electricity_production_fuel_consumption():
+    # https://energia.fi/files/426/Sahkon_hankinta_energialahteittain_2007-2017_web.xls.xlsx
+    sheets = pd.read_excel(
+        'data/Sahkon_hankinta_energialahteittain_2007-2017_web.xls.xlsx',
+        header=[30, 31], index_col=0, sheet_name=None
+    )
+
+    all_dfs = None
+    for year, df in sheets.items():
+        df.columns = pd.Index([' '.join([x for x in y if 'Unnamed' not in x]) for y in df.columns.to_flat_index()])
+        df.dropna(how='all', inplace=True)
+        df['year'] = int(year)
+        if all_dfs is None:
+            all_dfs = df
+        else:
+            all_dfs = all_dfs.append(df)
+
+    df = all_dfs
+    df = df.reset_index()
 
     return df
