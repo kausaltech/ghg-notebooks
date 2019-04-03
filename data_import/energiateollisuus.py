@@ -1,3 +1,5 @@
+import glob
+import re
 from datetime import timedelta
 import pytz
 import pandas as pd
@@ -51,10 +53,13 @@ def _determine_fuel_mapping(df):
 
 ENERGY_SOURCE_MAP = {
     "Keskiraskaat öljyt (kevyt polttoöljy)": "1139",  # Muut keskiraskaat öljyt
+    "Kevyt polttoöljy": "1134",  # Kevyt polttoöljy, vähärikkinen
     "Raskaat öljyt": "1145",  # Raskas polttoöljy, rikkipitoisuus <0,5%
+    "Raskas polttoöljy": "1145",
     "Kierrätys- ja jäteöljyt": "116",
     "Muut öljytuotteet": "119",
     "Kivihiili ja antrasiitti": "1212",  # Kivihiili
+    "Kivihiili": "1212",
     "Muu hiili": "1229",  # Muu erittelemätön hiili
     "Koksi": "123",
     "Maakaasu": "1311",
@@ -96,35 +101,88 @@ ENERGY_SOURCE_MAP = {
 }
 
 
-def get_district_heating_fuel_stats(include_units=False):
-    df = pd.read_excel('Vuositaulukot17_netti.xlsx', sheet_name='Taul3', header=2)
+def _process_distring_heating_excel(df):
     df = df.drop(columns=df.columns[0])
     col_map = {
-        df.columns[0]: 'producer_id',
-        df.columns[1]: 'producer_name',
+        df.columns[0]: 'Operator',
+        df.columns[1]: 'OperatorName',
     }
     df = df.rename(columns=col_map)
-
     # Drop rows that don't have a producer id
-    df = df[~df.producer_id.isnull()]
+    df = df[~(df.Operator.isnull() | df.OperatorName.isnull())]
 
-    df.producer_name = df.producer_name.astype(str)
+    df.OperatorName = df.OperatorName.astype(str)
 
     # Make sure data columns have numbers in them
     for col in df.columns[2:]:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
+    return df
+
+
+def _process_district_heating_fuel_stats(fname):
+    df = pd.read_excel(fname, sheet_name='Taul3', header=2, converters={1: lambda x: str(x)})
+    df = _process_distring_heating_excel(df)
+
     # Convert columns into rows
-    df = df.melt(id_vars=['producer_id', 'producer_name'], var_name='quantity', value_name='energy')
+    df = df.melt(id_vars=['Operator', 'OperatorName'], var_name='Quantity', value_name='Value')
     # Drop NaN rows
-    df = df[~df.energy.isna()]
+    df = df[~df.Value.isna()]
+    df = df[~(df.Quantity == 'Polttoöljy yhteensä')]
 
-    df['statfi_fuel_code'] = df.quantity.map(ENERGY_SOURCE_MAP)
-
-    if include_units:
-        df.energy = df.energy.astype('pint[GWh]')
+    df['StatfiFuelCode'] = df.Quantity.map(ENERGY_SOURCE_MAP)
+    df['Unit'] = 'GWh'
 
     return df
+
+
+def _process_distring_heating_production_stats(fname):
+    df = pd.read_excel(fname, sheet_name='Taul1', header=7)
+    df = _process_distring_heating_excel(df)
+    COLS_TO_KEEP = [
+        'Nettotuotanto polttoaineilla', 'Lämmön talteenotto tai lämpöpumpun tuotanto', 'Osto', 'Yhteensä',
+        'Käyttö', 'Toimitus', 'Verkkohäviöt ja mittauserot', 'Kaukolämmön nettotuotannosta yhteistuotantona',
+        'Kaukolämmön tuotantoon liittyvä sähkön nettotuotanto', 'Kaukolämmön tuotantoon kulunut sähkö', 'Kaukolämmön siirron pumppuenergia'
+    ]
+    COL_UNITS = 'GWh GWh GWh GWh GWh GWh GWh GWh GWh MWh MWh'.split()
+
+    cols_to_drop = [col for col in df.columns if col not in COLS_TO_KEEP + ['Operator', 'OperatorName']]
+    df = df.drop(columns=cols_to_drop)
+
+    # Convert columns into rows
+    df = df.melt(id_vars=['Operator', 'OperatorName'], var_name='Quantity', value_name='Value')
+    # Drop NaN rows
+    df = df[~df.Value.isna()]
+
+    unit_map = {x[0]: x[1] for x in zip(COLS_TO_KEEP, COL_UNITS)}
+    df['Unit'] = df.Quantity.map(unit_map)
+    return df
+
+
+def get_district_heating_fuel_stats():
+    dfs = []
+    for fname in glob.glob('data/energiateollisuus/Vuositaulukot*'):
+        year = int('20' + re.search(r'(\d\d)', fname).groups()[0])
+        fuel_df = _process_district_heating_fuel_stats(fname)
+        fuel_df['Vuosi'] = year
+        dfs.append(fuel_df)
+
+    df = dfs[0]
+    all_years = df.append(dfs[1:]).set_index('Vuosi', 'Operator').sort_index()
+    return all_years.reset_index()
+
+
+def get_district_heating_production_stats():
+    dfs = []
+    for fname in glob.glob('data/energiateollisuus/Vuositaulukot*'):
+        year = int('20' + re.search(r'(\d\d)', fname).groups()[0])
+        fuel_df = _process_distring_heating_production_stats(fname)
+        fuel_df['Vuosi'] = year
+        dfs.append(fuel_df)
+
+    df = dfs[0]
+    all_years = df.append(dfs[1:]).set_index('Vuosi', 'Operator').sort_index()
+    return all_years.reset_index()
 
 
 def get_electricity_production_hourly_data(include_units=False):
@@ -190,3 +248,21 @@ def get_electricity_production_fuel_consumption():
     df = df.reset_index()
 
     return df
+
+
+def update_quilt_datasets():
+    import quilt
+    from quilt.data.jyrjola import energiateollisuus
+
+    fuel_df = get_district_heating_fuel_stats()
+    energiateollisuus._set(['district_heating_fuel'], fuel_df)
+
+    production_df = get_district_heating_production_stats()
+    energiateollisuus._set(['district_heating_production'], production_df)
+
+    quilt.build('jyrjola/energiateollisuus', energiateollisuus)
+    quilt.push('jyrjola/energiateollisuus', is_public=True)
+
+
+if __name__ == '__main__':
+    update_quilt_datasets()
