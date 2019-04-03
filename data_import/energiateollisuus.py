@@ -140,14 +140,15 @@ def _process_distring_heating_production_stats(fname):
     df = pd.read_excel(fname, sheet_name='Taul1', header=7)
     df = _process_distring_heating_excel(df)
     COLS_TO_KEEP = [
-        'Nettotuotanto polttoaineilla', 'Lämmön talteenotto tai lämpöpumpun tuotanto', 'Osto', 'Yhteensä',
-        'Käyttö', 'Toimitus', 'Verkkohäviöt ja mittauserot', 'Kaukolämmön nettotuotannosta yhteistuotantona',
-        'Kaukolämmön tuotantoon liittyvä sähkön nettotuotanto', 'Kaukolämmön tuotantoon kulunut sähkö', 'Kaukolämmön siirron pumppuenergia'
+        'Nettotuotanto polttoaineilla', 'Lämmön talteenotto tai lämpöpumpun tuotanto', 'Osto', 'Kulutus',
+        'Yhteensä', 'Käyttö', 'Toimitus', 'Verkkohäviöt ja mittauserot', 'Kaukolämmön nettotuotannosta yhteistuotantona',
+        'Kaukolämmön tuotantoon liittyvä sähkön nettotuotanto', 'Kaukolämmön tuotantoon kulunut sähkö',
+        'Kaukolämmön siirron pumppuenergia'
     ]
-    COL_UNITS = 'GWh GWh GWh GWh GWh GWh GWh GWh GWh MWh MWh'.split()
+    COL_UNITS = 'GWh GWh GWh GWh GWh GWh GWh GWh GWh GWh MWh MWh'.split()
 
     cols_to_drop = [col for col in df.columns if col not in COLS_TO_KEEP + ['Operator', 'OperatorName']]
-    df = df.drop(columns=cols_to_drop)
+    df = df.drop(columns=cols_to_drop).rename(columns=dict(Kulutus='Käyttö'))
 
     # Convert columns into rows
     df = df.melt(id_vars=['Operator', 'OperatorName'], var_name='Quantity', value_name='Value')
@@ -164,11 +165,11 @@ def get_district_heating_fuel_stats():
     for fname in glob.glob('data/energiateollisuus/Vuositaulukot*'):
         year = int('20' + re.search(r'(\d\d)', fname).groups()[0])
         fuel_df = _process_district_heating_fuel_stats(fname)
-        fuel_df['Vuosi'] = year
+        fuel_df['Year'] = year
         dfs.append(fuel_df)
 
     df = dfs[0]
-    all_years = df.append(dfs[1:]).set_index('Vuosi', 'Operator').sort_index()
+    all_years = df.append(dfs[1:]).set_index('Year', 'Operator').sort_index()
     return all_years.reset_index()
 
 
@@ -177,11 +178,11 @@ def get_district_heating_production_stats():
     for fname in glob.glob('data/energiateollisuus/Vuositaulukot*'):
         year = int('20' + re.search(r'(\d\d)', fname).groups()[0])
         fuel_df = _process_distring_heating_production_stats(fname)
-        fuel_df['Vuosi'] = year
+        fuel_df['Year'] = year
         dfs.append(fuel_df)
 
     df = dfs[0]
-    all_years = df.append(dfs[1:]).set_index('Vuosi', 'Operator').sort_index()
+    all_years = df.append(dfs[1:]).set_index('Year', 'Operator').sort_index()
     return all_years.reset_index()
 
 

@@ -8,9 +8,10 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
-from scipy.optimize import least_squares
 # + {}
 from utils.quilt import load_datasets
+
+from .variables import get_variable, set_variable
 
 INPUT_DATASETS = [
     'jyrjola/aluesarjat/hginseutu_va_ve01_vaestoennuste_pks',
@@ -22,32 +23,6 @@ INPUT_DATASETS = [
 population_forecast = None
 buildings_by_heating_method = None
 ghg_emissions = None
-
-# Variables
-VARIABLES = {
-    'target_year': 2035,
-    'population_forecast_correction': 10,  # Percent in target year
-    'ghg_reductions_reference_year': 1990,
-    'ghg_reductions_percentage_in_target_year': 80,
-    'ghg_reductions_weights': {
-        'heating': 30,
-        'electricity': 30,
-        'transport': 30,
-        'waste_management': 30,
-        'industry': 30,
-    },
-    'municipality_name': 'Helsinki',
-}
-
-
-def set_variable(var_name, value):
-    assert var_name in VARIABLES
-    assert isinstance(value, type(VARIABLES[var_name]))
-    VARIABLES[var_name] = value
-
-
-def get_variable(var_name):
-    return VARIABLES[var_name]
 
 
 # Adjusted datasets
@@ -176,15 +151,22 @@ def get_ghg_emissions_forecast():
 
     main_sector_emissions = sum([val for key, val in last_emissions.items() if key in GHG_SECTOR_MAP.values()])
     emission_shares = {sector_id: last_emissions[sector_name] / main_sector_emissions for sector_id, sector_name in GHG_SECTOR_MAP.items()}
-    reductions_left = sum(last_emissions.values()) - target_emissions
+    main_sector_target_emissions = target_emissions - sum([last_emissions[s] for s in other_sectors])
+
+    target_year_emissions = {}
 
     weight_sum = sum(sector_weights.values())
-    target_year_emissions = {}
     for sector_id, sector_name in GHG_SECTOR_MAP.items():
         weight = (sector_weights[sector_id] / weight_sum) * len(sector_weights)
-        share = emission_shares[sector_id]
-        reduction = reductions_left * share * weight
-        target_year_emissions[sector_name] = last_emissions[sector_name] - reduction
+        emission_shares[sector_id] /= weight
+
+    sum_shares = sum(emission_shares.values())
+    for key, val in emission_shares.items():
+        emission_shares[key] = val / sum_shares
+
+    for sector_id, sector_name in GHG_SECTOR_MAP.items():
+        target = main_sector_target_emissions * emission_shares[sector_id]
+        target_year_emissions[sector_name] = target
 
     for sector_name in other_sectors:
         target_year_emissions[sector_name] = last_emissions[sector_name]
@@ -243,19 +225,34 @@ ghg_sliders = []
 def generate_ghg_sliders():
     out = []
     for key, val in GHG_SECTOR_MAP.items():
+        if val == 'Lämmitys':
+            slider_val = 40
+        else:
+            slider_val = 25
         slider = dcc.Slider(
             id='ghg-%s-slider' % key,
             min=5,
             max=50,
             step=1,
-            value=25,
+            value=slider_val,
+            marks={25: ''},
         )
-        out.append(html.Div([
-            html.H5('Sektorin %s vähennykset' % val),
+        out.append(dbc.Col([
+            html.Strong('%s' % val),
             slider
-        ], style={'marginBottom': 25}))
+        ], md=12, className='mb-4'))
         ghg_sliders.append(slider)
-    return out
+
+    return dbc.Row(out)
+
+
+def find_consecutive_start(values):
+    last_val = start_val = values[0]
+    for val in values[1:]:
+        if val - last_val != 1:
+            start_val = val
+        last_val = val
+    return start_val
 
 
 def generate_ghg_emission_graph(df):
@@ -268,7 +265,9 @@ def generate_ghg_emission_graph(df):
         'Maatalous': '#680D48',
     }
 
-    hist_df = df.query('~Forecast')
+    start_year = find_consecutive_start(df.index.unique())
+
+    hist_df = df.query('~Forecast & index > %s' % start_year)
 
     latest_year = hist_df.loc[hist_df.index.max()]
     data_columns = list(latest_year.sort_values(ascending=False).index)
@@ -302,7 +301,17 @@ def generate_ghg_emission_graph(df):
             hoverformat='.3r',
             separatethousands=True,
             title='KHK-päästöt (kt CO₂-ekv.)'
-        )
+        ),
+        margin=go.layout.Margin(
+            t=0,
+            r=0,
+        ),
+        legend=dict(
+            x=0.7,
+            y=1,
+            traceorder='normal',
+            bgcolor='#fff',
+        ),
     )
 
     fig = go.Figure(data=hist_traces + forecast_traces, layout=layout)
@@ -332,6 +341,10 @@ population_tab_content = dbc.Card(
             ]),
             dcc.Graph(
                 id='population-graph',
+                config={
+                    'displayModeBar': False,
+                    'showLink': False,
+                }
             ),
         ]
     ),
@@ -373,10 +386,22 @@ app.layout = dbc.Container([
         dbc.Col([
             html.H2('Kasvihuonekaasupäästöt', style=dict(marginBottom='1em')),
             html.Div(id='ghg-emissions-table-container'),
-            dcc.Graph(id='ghg-emissions-graph'),
-            html.Div(generate_ghg_sliders(), id='ghg-sliders'),
         ])
     ]),
+    dbc.Row([
+        dbc.Col([
+            html.Div(generate_ghg_sliders(), id='ghg-sliders'),
+        ], md=4),
+        dbc.Col([
+            dcc.Graph(
+                id='ghg-emissions-graph',
+                config={
+                    'displayModeBar': False,
+                    'showLink': False,
+                }
+            ),
+        ], md=8),
+    ], className='mt-4'),
     dbc.Row([
         dbc.Col([
             html.H2('Yleiset oletukset'),
@@ -422,11 +447,15 @@ def ghg_slider_callback(*values):
     df = get_ghg_emissions_forecast()
     fig = generate_ghg_emission_graph(df)
 
+    df['Yhteensä'] = df.sum(axis=1)
     last_hist_year = df[~df.Forecast].index.max()
     data_columns = list(df.loc[df.index == last_hist_year].stack().sort_values(ascending=False).index.get_level_values(1))
 
     data_columns.remove('Forecast')
     data_columns.insert(0, 'Vuosi')
+    data_columns.remove('Yhteensä')
+    data_columns.append('Yhteensä')
+    print(data_columns)
 
     last_forecast_year = df[df.Forecast].index.max()
     table_df = df.loc[df.index.isin([last_hist_year, last_forecast_year - 5, last_forecast_year - 10, last_forecast_year])]
@@ -443,7 +472,7 @@ def ghg_slider_callback(*values):
     table = dash_table.DataTable(
         data=table_data,
         columns=table_cols,
-        style_as_list_view=True,
+        #style_as_list_view=True,
         style_cell={'padding': '5px'},
         style_header={
             'fontWeight': 'bold'
@@ -462,10 +491,8 @@ def ghg_slider_callback(*values):
 # -
 
 
-if False and __name__ == '__main__':
+if __name__ == '__main__':
     app.run_server(debug=True)
-else:
-    pass
 
 
 # +
@@ -476,4 +503,5 @@ plotly.offline.init_notebook_mode(connected=True)
 cf.set_config_file(offline=True)
 #plotly.offline.iplot(fig)
 
-plotly.offline.iplot(generate_buildings_forecast_graph(buildings_by_heating_method))
+
+#plotly.offline.iplot(generate_buildings_forecast_graph(buildings_by_heating_method))
