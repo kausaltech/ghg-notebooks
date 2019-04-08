@@ -11,10 +11,21 @@ VARIABLES = {
         'waste_management': 30,
         'industry': 30,
     },
-    'bio_is_emissionless': True,
+
+    'bio_is_emissionless': False,
+
     'municipality_name': 'Helsinki',
 
     'district_heating_operator': '005',  # Helen Oy
+    'district_heating_target_production_ratios': {
+        'Puupelletit ja -briketit': 30,
+        'Maakaasu': 30,
+        'Lämpöpumput': 30,
+        'Kivihiili ja antrasiitti': 10
+    },
+    'district_heating_target_demand_change': 0,
+
+    'electricity_production_emissions_correction': 0,
 }
 
 

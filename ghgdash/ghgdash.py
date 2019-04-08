@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import dash
 import dash_table
+import dash_daq as daq
 from dash_table.Format import Format, Scheme
 import dash_core_components as dcc
 import dash_html_components as html
@@ -12,6 +13,8 @@ import plotly.graph_objs as go
 from utils.quilt import load_datasets
 
 from .variables import get_variable, set_variable
+from .district_heating import get_district_heating_unit_emissions_forecast
+
 
 INPUT_DATASETS = [
     'jyrjola/aluesarjat/hginseutu_va_ve01_vaestoennuste_pks',
@@ -214,6 +217,50 @@ def generate_buildings_forecast_graph(buildings_df):
     return go.Figure(data=traces, layout=layout)
 
 
+def generate_district_heating_forecast_graph(df):
+    s = df['District heat consumption emissions']
+    trace = go.Bar(x=s.index, y=s)
+    return go.Figure(data=[trace])
+
+
+def generate_district_heating_forecast_table(df):
+    last_hist_year = df[~df.Forecast].index.max()
+    df.index.name = 'Year'
+
+    data_columns = list(df.columns)
+    data_columns.remove('Forecast')
+    data_columns.insert(0, 'Year')
+
+    last_forecast_year = df[df.Forecast].index.max()
+    table_df = df.loc[df.index.isin([last_hist_year, last_forecast_year - 5, last_forecast_year - 10, last_forecast_year])]
+    table_data = table_df.reset_index().to_dict('rows')
+    table_cols = []
+    for col_name in data_columns:
+        col = dict(id=col_name, name=col_name)
+        if col_name == 'Year':
+            pass
+        else:
+            col['type'] = 'numeric'
+            col['format'] = Format(precision=0, scheme=Scheme.fixed)
+        table_cols.append(col)
+    table = dash_table.DataTable(
+        data=table_data,
+        columns=table_cols,
+        #style_as_list_view=True,
+        style_cell={'padding': '5px'},
+        style_header={
+            'fontWeight': 'bold'
+        },
+        style_cell_conditional=[
+            {
+                'if': {'column_id': 'Vuosi'},
+                'fontWeight': 'bold',
+            }
+        ]
+    )
+    return table
+
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
@@ -377,7 +424,29 @@ buildings_tab_content = dbc.Card(
             ),
         ]
     ),
-    className="mt-3",
+    className='mt-3',
+)
+
+
+district_heat_tab_content = dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Graph(id='district-heating-graph'),
+            html.Div(id='district-heating-table-container'),
+            html.Div([
+                html.H5('Kaukolämmön kulutus'),
+                dcc.Slider(
+                    id='district-heating-demand-slider',
+                    min=-50,
+                    max=50,
+                    step=5,
+                    value=0,
+                    marks={x: '%d %%' % x for x in range(-50, 50 + 1, 10)},
+                ),
+            ], style={'marginBottom': 25}),
+        ]
+    ),
+    className='mt-3'
 )
 
 
@@ -406,9 +475,9 @@ app.layout = dbc.Container([
         dbc.Col([
             html.H2('Yleiset oletukset'),
             dbc.Tabs(id="general-assumptions-tabs", children=[
+                dbc.Tab(district_heat_tab_content, label='Kaukolämpö'),
                 dbc.Tab(population_tab_content, label='Väestö'),
                 dbc.Tab(buildings_tab_content, label='Rakennuskanta'),
-                dbc.Tab(label='Työpaikat'),
             ]),
         ]),
     ]),
@@ -438,6 +507,19 @@ def buildings_callback(value):
 
 
 @app.callback(
+    [Output('district-heating-graph', 'figure'), Output('district-heating-table-container', 'children')],
+    [Input('district-heating-demand-slider', 'value')])
+def district_heating_callback(value):
+    set_variable('district_heating_target_demand_change', value)
+
+    df = get_district_heating_unit_emissions_forecast()
+    fig = generate_district_heating_forecast_graph(df)
+    table = generate_district_heating_forecast_table(df)
+
+    return fig, table
+
+
+@app.callback(
     [Output('ghg-emissions-graph', 'figure'), Output('ghg-emissions-table-container', 'children')],
     [Input(slider.id, 'value') for slider in ghg_sliders])
 def ghg_slider_callback(*values):
@@ -455,7 +537,6 @@ def ghg_slider_callback(*values):
     data_columns.insert(0, 'Vuosi')
     data_columns.remove('Yhteensä')
     data_columns.append('Yhteensä')
-    print(data_columns)
 
     last_forecast_year = df[df.Forecast].index.max()
     table_df = df.loc[df.index.isin([last_hist_year, last_forecast_year - 5, last_forecast_year - 10, last_forecast_year])]
@@ -488,20 +569,5 @@ def ghg_slider_callback(*values):
     return [fig, table]
 
 
-# -
-
-
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-
-# +
-import plotly
-import plotly.graph_objs as go
-import cufflinks as cf
-plotly.offline.init_notebook_mode(connected=True)
-cf.set_config_file(offline=True)
-#plotly.offline.iplot(fig)
-
-
-#plotly.offline.iplot(generate_buildings_forecast_graph(buildings_by_heating_method))
