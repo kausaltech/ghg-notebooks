@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytz
 import pandas as pd
 import pintpandas  # noqa
+import glob
 
 
 LOCAL_TZ = pytz.timezone('Europe/Helsinki')
@@ -187,18 +188,76 @@ def get_district_heating_production_stats():
 
 
 def get_electricity_production_hourly_data(include_units=False):
-    df = pd.read_excel('tuntidata_2017.xlsx', header=0)
-    df['time'] = (pd.to_datetime(df[['Year', 'Month', 'Day', 'Hour']]) - timedelta(hours=3))
-    df.set_index('time', inplace=True)
-    df.index = df.index.tz_localize(pytz.utc).tz_convert(LOCAL_TZ)
-    df.drop(columns=['Year', 'Month', 'Day', 'Hour', 'Week'], inplace=True)
-    for col in list(df.columns):
-        if 'Unnamed' in col:
-            df.drop(columns=[col], inplace=True)
-            continue
-        if include_units:
-            df[col] = df[col].astype('pint[MWh]')
-        df.rename(columns={col: col.split('\n')[1]}, inplace=True)
+    all_dfs = []
+
+    for fname in sorted(glob.glob('data/energiateollisuus/sähkö/tunti*')):
+        print(fname)
+        df = pd.read_excel(fname, header=0)
+        df['time'] = (pd.to_datetime(df[['Year', 'Month', 'Day', 'Hour']]) - timedelta(hours=3))
+        df.set_index('time', inplace=True)
+        df.index = df.index.tz_localize(pytz.utc).tz_convert(LOCAL_TZ)
+        df.drop(columns=['Year', 'Month', 'Day', 'Hour', 'Week'], inplace=True)
+        for col in list(df.columns):
+            if 'Unnamed' in col or '\n' not in col or 'Net import' in col:
+                df.drop(columns=[col], inplace=True)
+                continue
+            if include_units:
+                df[col] = df[col].astype('pint[MWh]')
+            df.rename(columns={col: col.split('\n')[1]}, inplace=True)
+        all_dfs.append(df)
+
+    df = pd.concat(all_dfs, sort=True)
+    df = df.dropna(subset=['CHP']).drop(columns='CHP')
+
+    return df
+
+
+def get_electricity_production_fuel_data():
+    frames = pd.read_excel('data/energiateollisuus/sähkö/Sähköntuotannon polttoaineet.xlsx', sheet_name=None, header=0)
+    dfs = []
+
+    for sheet_name, df in frames.items():
+        # Make the dates refer to the end of the month
+        df['Day'] = 1
+        df['Date'] = pd.to_datetime(df[['Year', 'Month', 'Day']])
+
+        df = df.drop(columns=['Year', 'Month', 'Day', 'Hour', 'Week'])
+        df = df.set_index('Date')
+
+        for col in list(df.columns):
+            if 'summa' in col or col.startswith('tuotanto') or 'Unnamed' in col:
+                df = df.drop(columns=[col])
+                continue
+            if 'ei-bio' in col:
+                df = df.rename(columns={col: col.replace('ei-bio', '').strip()})
+
+        df = pd.melt(df.reset_index(), id_vars=['Date'])
+        l = df.variable.str.split(' ')
+        df['Method'] = l.map(lambda x: x[0])
+        df['Method'] = df['Method'].map(dict(erillistuotanto='Separate Thermal', yhteistuotanto='CHP'))
+
+        df['Fuel'] = l.map(lambda x: x[1])
+        df['Fuel'] = df['Fuel'].map(dict(
+            hiili='Coal',
+            öljy='Oil',
+            maakaasu='Natural gas',
+            turve='Peat',
+            bio='Bio',
+            muu='Other'
+        ))
+        if 'Sähköntuotanto' in sheet_name:
+            df.name = 'Production'
+        else:
+            assert 'Polttoaine-energia' in sheet_name
+            df.name = 'FuelUse'
+
+        df = df.rename(columns=dict(value=df.name))
+        df = df.drop(columns=['variable'])
+        dfs.append(df)
+
+    df = dfs[0].merge(dfs[1], how='outer', on=['Date', 'Method', 'Fuel'])
+    df = df.set_index(['Date', 'Method', 'Fuel']).sort_index().reset_index()
+
     return df
 
 
@@ -260,6 +319,12 @@ def update_quilt_datasets():
 
     production_df = get_district_heating_production_stats()
     energiateollisuus._set(['district_heating_production'], production_df)
+
+    hourly = get_electricity_production_hourly_data()
+    energiateollisuus._set(['electricity_production_hourly'], hourly)
+
+    el_fuel = get_electricity_production_fuel_data()
+    energiateollisuus._set(['electricity_production_fuels'], el_fuel)
 
     quilt.build('jyrjola/energiateollisuus', energiateollisuus)
     quilt.push('jyrjola/energiateollisuus', is_public=True)

@@ -215,8 +215,15 @@ MEASUREMENTS = {
         "start_date": date(2010, 11, 8),
         "end_date": date(2017, 9, 14),
         "variable_id": 189,
-        "interval": 3 * 60,  # 3 minutes
+        "interval": THREE_MIN,  # 3 minutes
     },
+    "purchase_price_of_production_imbalance_power": {
+        "unit": "EUR/MWh",
+        "quantity": "price",
+        "variable_id": 92,
+        "interval": HOURLY,
+        "start_date": date(2009, 1, 1),
+    }
 }
 
 
@@ -256,7 +263,7 @@ _check_variable_uniqueness()
 
 
 if __name__ == '__main__':
-    from data_import.utils import find_start_date
+    from utils.data_import import find_data_start
     import settings
 
     set_api_key(settings.FINGRID_API_KEY)
@@ -271,6 +278,6 @@ if __name__ == '__main__':
 
             return True
 
-        ds = find_start_date(check_date)
+        ds = find_data_start(check_date)
         print(name)
         print('        "start_date": date(%d, %d, %d),' % (ds.year, ds.month, ds.day))

@@ -1,6 +1,5 @@
 import re
 import requests
-import requests_cache
 import quilt
 from datetime import datetime, timedelta
 from pandas_pcaxis import PxParser
@@ -33,8 +32,6 @@ def scrape_all_px_urls():
     dbs = []
     for match in re.finditer(r'\'(/DATABASE/\w.+?)\'', s):
         g = match.groups()[0]
-        if 'UUDENMAANSARJAT' not in g:
-            continue
         dbs += scrape_one(g)
 
     urls = []
@@ -44,32 +41,6 @@ def scrape_all_px_urls():
     return urls
 
 
-def get_population_stats():
-    url = 'http://www.aluesarjat.fi/graph/Download.aspx?file=../DATABASE/SEUTUSARJAT/VAESTO/VAESTOENNUSTEET/Hginseutu_VA_VE01_Vaestoennuste_PKS.px'
-    resp = requests.get(url)
-    resp.raise_for_status()
-
-    content = resp.content.decode('iso8859-1')
-    parser = PxParser()
-    file = parser.parse(content)
-    df = file.to_df(melt=True, dropna=True)
-    return df
-
-
-def get_building_stats():
-    url = 'http://www.aluesarjat.fi/graph/Download.aspx?file=../DATABASE/ALUESARJAT_KAUPUNKIVERKKO/ASUNTO_RAKENNUSKANTA_SAL/RAKENNUSKANTA_SAL/A01S_HKI_Rakennuskanta.px'
-    resp = requests.get(url)
-    resp.raise_for_status()
-
-    content = resp.content.decode('iso8859-15')
-    parser = PxParser()
-    file = parser.parse(content)
-    from pprint import pprint
-    pprint(dict(file.meta))
-    df = file.to_df(melt=True, dropna=True)
-    return df
-
-
 def download_all_datasets():
     import os
     import settings
@@ -77,17 +48,20 @@ def download_all_datasets():
     SKIP_URLS = [
         "http://www.aluesarjat.fi/graph/Download.aspx?file=../DATABASE/ALUESARJAT_KAUPUNKIVERKKO/VAESTO_SAL/VAESTOENNUSTEET_SAL/B01ESPS_Vaestoennuste.px"
     ]
-    data_dir = os.path.join(settings.DATA_DIR, 'ymp')
+    data_dir = os.path.join(settings.DATA_DIR, 'aluesarjat')
 
     urls = scrape_all_px_urls()
+    print(urls)
     for url in urls:
         if url in SKIP_URLS:
             continue
 
         fname = os.path.join(data_dir, url.split('/')[-1])
+        print(fname)
         if os.path.exists(fname):
             continue
 
+        print("downloading")
         resp = requests.get(url)
         resp.raise_for_status()
         with open(fname, 'wb') as f:
@@ -101,26 +75,35 @@ def update_quilt(quilt_path):
 
     def upload_px_dataset(root_node, file):
         fname = os.path.splitext(os.path.basename(file))[0]
-        if 'hginseutu' not in fname.lower() and 'UM' not in fname:
+        if 'hginseutu' not in fname.lower() and 'UM' not in fname and 'hki' not in fname.lower():
             return
 
+        print(fname)
         if re.match('^[0-9]', fname):
             # If the name begins with a number, prefix it with an letter
             # to make it a legal Python identifier.
             fname = 'z' + fname
 
+        fname = fname.replace('-', '_').lower()
+
         content = open(file, 'r', encoding='windows-1252').read()
         parser = PxParser()
-        file = parser.parse(content)
+        try:
+            file = parser.parse(content)
+        except Exception as e:
+            print(e)
+            return
+
         now = datetime.now()
 
         parser = PxParser()
         file = parser.parse(content)
         now = datetime.now()
-        if 'last_updated' not in file.meta or (now - file.meta['last_updated']) > timedelta(days=2 * 365):
-            return
+        from pprint import pprint
+        #if 'last_updated' not in file.meta or (now - file.meta['last_updated']) > timedelta(days=2 * 365):
+        #    return
 
-        print("%s: %s" % (fname, file.meta['contents']))
+        print("\t%s" % file.meta['contents'])
 
         if root_node:
             quilt_target = root_node
