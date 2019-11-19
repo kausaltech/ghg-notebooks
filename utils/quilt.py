@@ -1,9 +1,12 @@
 import quilt
+from quilt.tools import store
+from quilt.tools.command import _materialize
+from quilt.imports import _from_core_node
+
 import importlib
 import logging
 import collections
 from datetime import datetime
-from pintpandas.pint_array import PintType
 
 
 logger = logging.getLogger(__name__)
@@ -46,25 +49,35 @@ def load_datasets(packages, include_units=False):
     for package_path in packages:
         user, root_pkg, *sub_paths = package_path.split('/')
 
-        mod_path = '%s.%s' % (user, root_pkg)
+        pkg_store, root_node = store.PackageStore.find_package(None, user, root_pkg)
+        if root_node is None:
+            quilt.install(package_path, force=True)
+            pkg_store, root_node = store.PackageStore.find_package(None, user, root_pkg)
+
+        node = root_node
+        while len(sub_paths):
+            name = sub_paths.pop(0)
+            for child_name, child_node in node.children.items():
+                if child_name != name:
+                    continue
+                try:
+                    node = _from_core_node(pkg_store, child_node)
+                except store.StoreException:
+                    quilt.install(package_path, force=True)
+                    node = _from_core_node(pkg_store, child_node)
+                break
+            else:
+                raise Exception('Dataset %s not found' % package_path)
+
         try:
-            root_mod = importlib.import_module('quilt.data.%s' % mod_path)
-        except ImportError:
-            quilt.install(package_path)
-            root_mod = importlib.import_module('quilt.data.%s' % mod_path)
+            df = node()
+        except store.StoreException:
+            _materialize(node)
+            df = node()
 
-        mod = root_mod
-        if sub_paths:
-            for sub_path in sub_paths:
-                mod = getattr(mod, sub_path)
-
-        if not isinstance(mod, quilt.nodes.DataNode):
-            raise Exception('Invalid package name: %s' % package_path)
-
-        df = mod()
         if include_units:
             for col_name in df.columns:
-                unit = mod._meta.get('%s_unit' % col_name, None)
+                unit = node._meta.get('%s_unit' % col_name, None)
                 if not unit:
                     continue
                 df[col_name] = df[col_name].astype('pint[%s]' % unit)
