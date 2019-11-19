@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
+# %% [markdown]
 # # Electricity production GHG emissions factor for Finland
 #
 # In Finland, the greenhouse gas emissions from electricity production are mostly associated with burning fuels in power plants. In this analysis, we calculate the emissions factor to supply the Finnish national electricity grid with one unit of energy. 
 
-# +
-INPUT_DATASETS = ['jyrjola/fingrid_hourly/power']
+# %%
+INPUT_DATASETS = [
+    'jyrjola/fingrid_hourly/power',
+    'jyrjola/energiateollisuus/electricity_production_hourly',
+    'jyrjola/energiateollisuus/electricity_production_fuels'
+]
 
 from datetime import timedelta
 import pandas as pd
@@ -15,9 +20,8 @@ from data_import import statfi, energiateollisuus
 
 fuel_emission_factors = statfi.get_fuel_classification(include_units=True)
 energy_production = statfi.get_energy_production_stats()
-et = energiateollisuus.get_electricity_production_hourly_data(include_units=False)
-monthly_electricity_data = energiateollisuus.get_electricity_monthly_data()
-fg = load_datasets(INPUT_DATASETS, include_units=False)
+
+fg_hourly, et_hourly, et_fuels = load_datasets(INPUT_DATASETS, include_units=False)
 
 import plotly
 from plotly.offline import iplot
@@ -27,15 +31,9 @@ import aplans_graphs
 
 plotly.offline.init_notebook_mode(connected=True)
 cf.set_config_file(offline=True)
-# -
 
 
-from quilt.data.jyrjola import aluesarjat
-
-df = aluesarjat.hginseutu_va_ve01_vaestoennuste_pks()
-
-
-
+# %% [markdown]
 # ## Fuel emission coefficients
 #
 # An emission coefficient is a value that relates the quantity of pollutants released to the atmosphere with an associated activity. Each of the fuel has a unit emissions coefficient that is based on the amount of gases with [global warming potential](https://en.wikipedia.org/wiki/Global_warming_potential) that are emitted. The emission coefficient is converted to match the mass of $\ce{CO2}$ that would produce the equivalent amount of GWP.
@@ -48,17 +46,79 @@ df = aluesarjat.hginseutu_va_ve01_vaestoennuste_pks()
 #
 # where $x$ refers to the target gas and $r$ to the reference gas, here $\ce{CO2}$. For this analysis, the [emission coefficients](https://www.stat.fi/tup/khkinv/khkaasut_polttoaineluokitus.html) for fuels are provided by Statistics Finland.
 
+# %%
 df = fuel_emission_factors[['name', 'co2e_emission_factor']]
 df.co2e_emission_factor = df.co2e_emission_factor.pint.m
-df.set_index('name', inplace=True)
+df = df.set_index('name').sort_values('co2e_emission_factor')
 df.iplot(kind='bar')
 
+# %%
 fuel_codes = energy_production['Fuel code'].unique()
 df = fuel_emission_factors.loc[fuel_emission_factors['code'].isin(fuel_codes), ['name_en', 'co2e_emission_factor']]
 df['co2e_emission_factor'] = df['co2e_emission_factor'].pint.m
 df = df.set_index('name_en')
 df.iplot(kind='bar', yTitle='g CO2e. / kWh', title='GHG emission coefficients for certain fuels')
 
+
+# %%
+def calculate_electricity_production_emissions(emissionless_bio=True):
+    df = et_fuels.copy()
+    df['FuelEmissionFactor'] = df.Fuel.map({
+        'Bio': 0 if emissionless_bio else 112,
+        'Coal': 106.0 * 0.99,
+        'Oil': 79.2,
+        'Natural gas': 55.3,
+        'Peat': 107.6 * 0.99,
+        'Other': 31.8 * 0.99
+    })
+    df['Emissions'] = df['FuelEmissionFactor'] * df['FuelUse'] / 1000
+
+    df = df.groupby(['Date', 'Method'])[['Production', 'Emissions']].sum()
+    df['EmissionFactor'] = df['Emissions'] / df['Production'] * 1000
+    monthly_emission_factors = df
+    df = df['EmissionFactor'].unstack('Method')
+    df.index += timedelta(days=14)
+    df = df.resample('h').mean().interpolate()
+    df.index = df.index.tz_localize('Europe/Helsinki', nonexistent='NaT', ambiguous='NaT')
+    df = df.loc[df.index.notnull()]
+    hourly_emission_factors = df
+
+    return hourly_emission_factors
+
+
+# %%
+def calculate_electricity_supply_emission_factor(emissionless_bio=True):
+    df = et_hourly.copy()
+
+    hourly_emission_factors = calculate_electricity_production_emissions(emissionless_bio)
+    chp_emissions = df[['CHP-Industry', 'CHP-District heating']].mul(hourly_emission_factors['CHP'], axis=0).dropna()
+    separate_thermal_emissions = df['Separate Thermal Power'].mul(hourly_emission_factors['Separate Thermal'], axis=0).dropna()
+
+    supply_emissions = chp_emissions.sum(axis=1) + separate_thermal_emissions
+    df['Emissions'] = supply_emissions
+    df['EmissionFactor'] = supply_emissions.div(df['Production'] + df['Import'], axis=0)
+    return df
+
+
+# %%
+df = calculate_electricity_supply_emission_factor(False)
+ydf = df.groupby(pd.Grouper(freq='Y')).sum()
+ydf['Emissions'].div(ydf['Production'] + ydf['Import'], axis=0)
+
+trace = go.Scattergl(y=df['EmissionFactor'], x=df.index, mode='lines')
+fig = go.Figure(data=[trace], layout=go.Layout(
+    yaxis=dict(rangemode='tozero', title='g (CO2-ekv.) / kWh'),
+    title='Sähkönhankinnan päästökerron (bio mukana)'
+))
+plotly.offline.iplot(fig)
+
+
+# %%
+df = fg_hourly.groupby(pd.Grouper(freq='M')).sum() / 1000
+df = df.loc[df.index < '2019'].tail()
+df
+
+# %% [markdown]
 # ## Efficiency method
 #
 # In combined heat and power (CHP) production, emissions are allocated to heat and electricity production according to a chosen method. Here we use the [efficiency method](https://ghgprotocol.org/sites/default/files/CHP_guidance_v1.0.pdf), where  emissions are allocated based on the energy inputs used to produce the separate heat and electricity products. This method uses assumed energy generation efficiency factors of alternative production methods.
@@ -88,7 +148,7 @@ df.iplot(kind='bar', yTitle='g CO2e. / kWh', title='GHG emission coefficients fo
 # >$F_{h}$ = fuel consumption allocated to heat production<br>
 # >$F$ = total fuel consumption in CHP<br>
 
-# +
+# %%
 df = energy_production.set_index('Year')
 
 CHP_METHODS = ['CHP/district heat', 'CHP/industry', 'CHP/small-scale CHP']
@@ -113,8 +173,8 @@ df = pd.merge(left=df, right=heat, left_index=True, right_index=True)
 df = (df / 1000).astype(int)
 df['Share of fuel for electricity'] = (electricity_fuel_share * 100).round(1).astype(str) + ' %'
 df[df.index > 2010]
-# -
 
+# %%
 fuels = fuel_emission_factors[['code', 'co2e_emission_factor']].set_index('code')
 df = energy_production.merge(fuels, how='left', left_on='Fuel code', right_index=True)
 production = df[df.Unit == 'TJ']
@@ -128,10 +188,10 @@ df.loc[df.Method.isin(['Conventional condensing', 'Electricity fuel share'])] = 
 df['Electricity emissions'] = df['Emissions'] * df['Electricity fuel share']
 #df.groupby(['Year', 'Energy source'])['Electricity emissions'].sum()
 
+# %%
 
 
-
-# +
+# %%
 # Copied from https://energia.fi/files/1414/a_Sahkontuotannon_kk_polttoaineet_tammi.pdf
 ELECTRICITY_PRODUCTION_BY_ENERGY_SOURCE = {
     'Bio': [1115, 1064, 1125, 983, 806, 701, 718, 682, 744, 1006, 1131, 1177, 1209, 1183, 1253, 1002, 784, 775, 842, 884, 905, 1105, 1199, 1375, 1405],
@@ -185,7 +245,7 @@ iplot(go.Figure(
     ),
 ))
 
-# +
+# %%
 import camelot
 import unicodedata
 
@@ -215,7 +275,7 @@ for energy, page in PAGES:
     else:
         separate_fuel_use = df
 
-# +
+# %%
 import pint
 
 emission_map = {
@@ -279,7 +339,7 @@ for name, col_name, emissions, production in emission_factors:
 
 monthly_co2e_emission_factors = co2e_emission_factors.tz_localize('Europe/Helsinki')
 
-# +
+# %%
 fg_to_et_map = {
     'Production': 'electricity_production',
     'CHP-District heating': 'chp_electricity_generation',
@@ -315,13 +375,13 @@ etmm = etmm.loc[(etmm.index >= '2017-10') & (etmm.index < '2019')]
 #    # display(pd.DataFrame(diff))
 
 etmm.index = etmm.index.tz_localize('Europe/Helsinki')
-# -
 
+# %%
 df = monthly_co2e_emission_factors[(monthly_co2e_emission_factors.index >= '2017-10') & (monthly_co2e_emission_factors.index < '2019-02')]
 chp_co2e = df.CHP
 sep_co2e = df['Separate Thermal Power']
 
-# +
+# %%
 from scipy.optimize import least_squares
 
 def determine_separate_thermal_power_share():
@@ -389,11 +449,10 @@ fig = go.Figure(data=[go.Scatter(dict(x=fig_series.index, y=fig_series))], layou
 plotly.offline.iplot(fig)
 #aplans_graphs.post_graph(fig, 80)
 
-# -
+# %%
 
 
-
-# +
+# %%
 monthly = fg.groupby(pd.Grouper(freq='YS')).sum() / 1000
 #fgmm = monthly.rename(columns={x[1]: x[0] for x in fg_to_et_map.items()}).loc[:, fg_to_et_map.keys()]
 #fgmm.Production - fgmm['CHP-District heating'] - fgmm['CHP-Industry'] - fgmm['Hydro Power'] - fgmm['Wind Power'] - fgmm['Nuclear Power'] - fgmm['Separate Thermal Power']
