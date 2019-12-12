@@ -29,6 +29,10 @@ ROAD_TYPE_MAP = {
     'HA tiet': 'Cars-Highways',
     'KA kadut': 'Trucks-Urban',
     'KA tiet': 'Trucks-Highways',
+    'KAIP tiet': 'Trucks:NoTrailer-Highways',
+    'KAP tiet': 'Trucks:Trailer-Highways',
+    'KAIP kadut': 'Trucks:NoTrailer-Urban',
+    'KAP kadut': 'Trucks:Trailer-Urban',
     'LA kadut ': 'Buses-Urban',
     'LA tiet ': 'Buses-Highways',
     'PA kadut': 'Vans-Urban',
@@ -59,9 +63,13 @@ ENGINE_TYPE_MAP = {
 MAX_YEAR = 2016
 
 
-def get_liisa_muni_data():
-    url = 'http://lipasto.vtt.fi/liisa/kunnat2017.xlsx'
-    df = pd.read_excel(url, skiprows=9, header=0)
+def get_liisa_muni_data(year):
+    url = 'http://lipasto.vtt.fi/liisa/kunnat%s.xlsx' % year
+    if year <= 2016:
+        skiprows = 12
+    else:
+        skiprows = 9
+    df = pd.read_excel(url, skiprows=skiprows, header=0)
     # Drop columns with no values
     df.dropna(axis=1, how='all', inplace=True)
     # Drop rows with any non-values
@@ -76,16 +84,23 @@ def get_liisa_muni_data():
         column_name = columns_left.pop(0)
         # Column names are like "kulutus [t]". Split the strings into
         # quantity, unit pairs.
-        quantity, unit = re.search(r'([\w\.\s]+)\[(\w+)\]', column_name).groups()
+        m = re.search(r'([\w\.\s]+)\[(\w+)\]', column_name)
+        if m is None:
+            if year <= 2014:
+                quantity = column_name
+            else:
+                raise Exception('Invalid column: %s' % column_name)
+        else:
+            quantity, unit = m.groups()
         quantity = quantity.strip()
         if quantity == 'CO2 ekv.':
             quantity = 'CO2e'
         elif quantity == 'kulutus':
-            quantity = 'fuel consumption'
+            quantity = 'FuelConsumption'
         elif quantity == 'energia':
-            quantity = 'energy'
+            quantity = 'Energy'
         elif quantity == 'suorite':
-            quantity = 'mileage'
+            quantity = 'Mileage'
         column_map[column_name] = quantity
         # print("%s [%s]" % (quantity, unit))
 
@@ -98,12 +113,22 @@ def get_liisa_muni_data():
     df.set_index(['type'], inplace=True)
     mapping = {x: tuple(y.split('-')) for x, y in ROAD_TYPE_MAP.items()}
     df.rename(index=mapping, level='type', inplace=True)
+
     df.index = pd.MultiIndex.from_tuples(df.index, names=['Vehicle', 'Road'])
     df.set_index(['Municipality'], append=True, inplace=True)
     df = df.reorder_levels(['Municipality', 'Vehicle', 'Road']).sort_index()
 
     # 'suorite' is in Mkm, convert to km
-    df['mileage'] *= 1000000
+    df['Mileage'] *= 1000000
+    df = df.reset_index()
+
+    if year <= 2014:
+        tdf = df[df.Vehicle.isin(['Trucks:NoTrailer', 'Trucks:Trailer'])]\
+            .drop(columns='Vehicle').groupby(['Municipality', 'Road']).sum().reset_index()
+        tdf['Vehicle'] = 'Trucks'
+        df = df.append(tdf, sort=False)
+        df = df[~df.Vehicle.isin(['Trucks:NoTrailer', 'Trucks:Trailer'])]
+        df = df.set_index(['Municipality', 'Vehicle', 'Road']).sort_index().reset_index()
 
     return df
 
@@ -114,12 +139,12 @@ def get_mileage_per_engine_type():
     df = pd.read_excel(url, skiprows=4, header=0, index_col=0, usecols="A:I")
 
     # Make sure we have parsed the .xlsx correctly
-    assert df.index.name == 2017
+    assert df.index.name == 2018
     df.index.name = 'Vehicle'
 
     # Remove useless rows from dataset
     df.dropna(axis=0, inplace=True, how='all')
-    df.drop(['Yhteensä', 2017], inplace=True)
+    df.drop(['Yhteensä', 2018], inplace=True)
     # Make sure the keys we're interested in are in the data
     assert 'HA bensiini' in df.index
     assert 'HA diesel' in df.index
@@ -284,6 +309,19 @@ def get_car_unit_emissions():
     return pd.DataFrame(list(series), index=index, columns=['emission_factor'])
 
 
+def get_all_liisa_data():
+    dfs = []
+
+    for year in (2012, 2013, 2014, 2015, 2016, 2017, 2018):
+        print(year)
+        df = get_liisa_muni_data(year).reset_index()
+        df['Year'] = year
+        dfs.append(df)
+
+    all_df = dfs[0].append(dfs[1:]).set_index(['Year', 'Municipality']).reset_index()
+    return all_df
+
+
 if __name__ == '__main__':
     import quilt
 
@@ -294,11 +332,11 @@ if __name__ == '__main__':
         quilt.build('%s/%s/%s' % (USER, PACKAGE_BASE, package), df)
         quilt.push('%s/%s/%s' % (USER, PACKAGE_BASE, package), is_public=True)
 
-    df = get_car_unit_emissions().reset_index()
-    build_and_push('car_unit_emissions', df)
+    #df = get_car_unit_emissions().reset_index()
+    #build_and_push('car_unit_emissions', df)
 
-    df = get_liisa_muni_data().reset_index()
+    df = get_all_liisa_data()
     build_and_push('emissions_by_municipality', df)
 
-    df = get_mileage_per_engine_type().reset_index()
-    build_and_push('mileage_per_engine_type', df)
+    #df = get_mileage_per_engine_type().reset_index()
+    #build_and_push('mileage_per_engine_type', df)
