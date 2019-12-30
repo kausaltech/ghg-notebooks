@@ -16,6 +16,11 @@ python-dateutil
 scipy
 environs
 pytz
--e git+https://github.com/hgrecco/pint-pandas#egg=pint-pandas
 psycopg2-binary
 jupytext
+modin[ray]
+ray
+psutil  # needed by ray
+numba
+python-snappy
+fastparquet
