@@ -1,4 +1,7 @@
+import tempfile
+import threading
 import quilt
+import fastparquet
 from quilt.tools import store
 from quilt.tools.command import _materialize
 from quilt.imports import _from_core_node
@@ -12,33 +15,32 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
-def pint_df_to_quilt(df):
-    meta = {}
-    copied = False
-    for col_name, dtype in list(df.dtypes.items()):
-        if not isinstance(dtype, PintType):
-            continue
-        if not copied:
-            df = df.copy()
-            copied = True
-        df[col_name] = df[col_name].pint.m
-        meta['%s_unit' % col_name] = str(dtype.units)
-
-    return df, meta
+quilt_lock = threading.Lock()
 
 
-def quilt_to_pint_df(node):
-    meta = node._meta
-    df = node()
-    for key, unit in meta.items():
-        if not key.endswith('_unit'):
-            continue
-        key = key.split('_unit')[0]
-        if key not in df.columns:
-            logger.warning('column %s not found in dataframe' % key)
-            continue
-        df[key] = df[key].astype('pint[%s]' % unit)
-    return df
+def _load_from_quilt(package_path):
+    user, root_pkg, *sub_paths = package_path.split('/')
+
+    pkg_store, root_node = store.PackageStore.find_package(None, user, root_pkg)
+    if root_node is None:
+        quilt.install(package_path, force=True)
+        pkg_store, root_node = store.PackageStore.find_package(None, user, root_pkg)
+
+    node = root_node
+    while len(sub_paths):
+        name = sub_paths.pop(0)
+        for child_name, child_node in node.children.items():
+            if child_name != name:
+                continue
+            try:
+                node = _from_core_node(pkg_store, child_node)
+            except store.StoreException:
+                quilt.install(package_path, force=True)
+                node = _from_core_node(pkg_store, child_node)
+            break
+        else:
+            raise Exception('Dataset %s not found' % package_path)
+    return node
 
 
 def load_datasets(packages, include_units=False):
@@ -47,40 +49,19 @@ def load_datasets(packages, include_units=False):
 
     datasets = []
     for package_path in packages:
-        user, root_pkg, *sub_paths = package_path.split('/')
-
-        pkg_store, root_node = store.PackageStore.find_package(None, user, root_pkg)
-        if root_node is None:
-            quilt.install(package_path, force=True)
-            pkg_store, root_node = store.PackageStore.find_package(None, user, root_pkg)
-
-        node = root_node
-        while len(sub_paths):
-            name = sub_paths.pop(0)
-            for child_name, child_node in node.children.items():
-                if child_name != name:
-                    continue
-                try:
-                    node = _from_core_node(pkg_store, child_node)
-                except store.StoreException:
-                    quilt.install(package_path, force=True)
-                    node = _from_core_node(pkg_store, child_node)
-                break
-            else:
-                raise Exception('Dataset %s not found' % package_path)
+        with quilt_lock:
+            node = _load_from_quilt(package_path)
 
         try:
             df = node()
         except store.StoreException:
-            _materialize(node)
+            with quilt_lock:
+                _materialize(node)
             df = node()
 
-        if include_units:
-            for col_name in df.columns:
-                unit = node._meta.get('%s_unit' % col_name, None)
-                if not unit:
-                    continue
-                df[col_name] = df[col_name].astype('pint[%s]' % unit)
+        if isinstance(df, str):
+            pf = fastparquet.ParquetFile(df)
+            df = pf.to_pandas()
 
         datasets.append(df)
 
@@ -116,7 +97,7 @@ def update_node_from_pcaxis(root_node_or_path, sub_path, px_file):
     try:
         import json
         json.dumps(meta, sort_keys=True)
-    except:
+    except Exception:
         from pprint import pprint
         pprint(meta)
         raise
@@ -124,3 +105,31 @@ def update_node_from_pcaxis(root_node_or_path, sub_path, px_file):
     getattr(root_node, sub_path)._meta['pxmeta'] = meta
 
     return root_node
+
+
+def df_to_quilt(df, path):
+    parts = path.split('/')
+    assert len(parts) > 2
+
+    root_pkg = '/'.join(parts[0:2])
+    try:
+        quilt.install(root_pkg, force=True)
+    except Exception:
+        pass
+
+    object_encoding = {}
+    df = df.copy()
+    for col, dtype in df.dtypes.iteritems():
+        if dtype.name in ('Int8', 'Int32'):
+            object_encoding[col] = 'int32'
+            df[col] = df[col].astype(object)
+        else:
+            object_encoding[col] = 'infer'
+
+    with tempfile.NamedTemporaryFile(suffix='.parquet') as f:
+        print('writing to %s' % f.name)
+        fastparquet.write(f.name, df, compression='snappy', object_encoding=object_encoding)
+        print('build')
+        quilt.build(path, f.name)
+        print('push')
+        quilt.push(root_pkg, is_public=True)
