@@ -3,7 +3,6 @@ import re
 from datetime import timedelta
 import pytz
 import pandas as pd
-import pintpandas  # noqa
 import glob
 
 
@@ -201,8 +200,6 @@ def get_electricity_production_hourly_data(include_units=False):
             if 'Unnamed' in col or '\n' not in col or 'Net import' in col:
                 df.drop(columns=[col], inplace=True)
                 continue
-            if include_units:
-                df[col] = df[col].astype('pint[MWh]')
             df.rename(columns={col: col.split('\n')[1]}, inplace=True)
         all_dfs.append(df)
 
@@ -280,10 +277,6 @@ def get_electricity_monthly_data(include_units=False):
     # Fix one left import artefact
     df.rename(columns={'TOTAL SUPPLY/Russia': 'TOTAL SUPPLY'}, inplace=True)
 
-    if include_units:
-        for col_name in df.columns:
-            df[col_name] = df[col_name].astype('pint[GWh]')
-
     return df
 
 
@@ -320,11 +313,13 @@ def update_quilt_datasets():
     production_df = get_district_heating_production_stats()
     energiateollisuus._set(['district_heating_production'], production_df)
 
+    """
     hourly = get_electricity_production_hourly_data()
     energiateollisuus._set(['electricity_production_hourly'], hourly)
 
     el_fuel = get_electricity_production_fuel_data()
     energiateollisuus._set(['electricity_production_fuels'], el_fuel)
+    """
 
     quilt.build('jyrjola/energiateollisuus', energiateollisuus)
     quilt.push('jyrjola/energiateollisuus', is_public=True)
