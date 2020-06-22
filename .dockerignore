@@ -1,0 +1,7 @@
+**/node_modules
+**/__pycache__
+data
+docs
+*.sqlite
+*.pq
+*.xlsx
