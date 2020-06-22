@@ -1,6 +1,8 @@
+import os
 import re
 import pandas as pd
-import pintpandas  # noqa
+from pandas_pcaxis import PxParser
+from utils.quilt import update_node_from_pcaxis
 
 
 def rename_column_that_contains(df, s, to):
@@ -155,3 +157,91 @@ def get_energy_production_stats():
     df['Fuel code'] = df['Energy source'].map(FUEL_MAP).astype(str)
 
     return df
+
+
+def update_quilt_datasets():
+    QUILT_TARGET = 'jyrjola/statfi'
+    from quilt.data.jyrjola import statfi as node
+    import quilt
+    import requests_cache
+    requests_cache.install_cache()
+
+    df = get_fuel_classification()
+    df.to_csv('fuel_classification.csv')
+    print(df)
+    exit()
+    node._set(['fuel_classification'], df)
+    quilt.build(QUILT_TARGET, node)
+    quilt.push(QUILT_TARGET, is_public=True)
+
+
+def get_pop():
+    parser = PxParser()
+    file = parser.parse(open('data/tilastokeskus/statfin_vaerak_pxt_11re.px', 'r', encoding='windows-1252').read())
+    node = update_node_from_pcaxis('jyrjola/tilastokeskus', 'vaestorakenne', file)
+    print(node)
+
+
+def walk_files():
+    i = 0
+    parser = PxParser()
+    file = parser.parse(open('data/tilastokeskus/statfin_vaerak_pxt_11re.px', 'r', encoding='windows-1252').read())
+
+    skip = True
+
+    for dirname, subdirs, files in os.walk('data/tilastokeskus'):
+        for fn in files:
+            if not fn.endswith('.px'):
+                continue
+
+            if fn == 'statfin_kans_pxt_11l5.px':
+                skip = False
+            if skip:
+                continue
+
+            full_fn = os.path.join(dirname, fn)
+            print(full_fn)
+            f = open(full_fn, 'r', encoding='windows-1252')
+            pxf = parser.parse(f.read())
+            df = pxf.to_df(melt=True)
+            print(df)
+
+        i += 1
+        if i == 10:
+            break
+
+
+def import_all():
+    import requests_cache
+    import requests
+    import io
+    import time
+
+    requests_cache.install_cache('statfi')
+
+    resp = requests.get('http://pxnet2.stat.fi/database/StatFin/StatFin_rap.csv')
+    resp.raise_for_status()
+    df = pd.read_csv(io.StringIO(resp.content.decode('iso-8859-15')), header=0, delimiter=';', dtype=str)
+    #print(df[['pathname', 'fileupdate', 'NEXT-UPDATE']])
+
+    for p in df['pathname']:
+        print(p)
+        out_name = p.split('/StatFin/')[1]
+        dirname = os.path.dirname(out_name)
+        fname = os.path.basename(out_name)
+        dirname = 'data/tilastokeskus/' + dirname
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        full_fn = os.path.join(dirname, fname)
+        if os.path.exists(full_fn):
+            continue
+        resp = requests.get(p)
+        resp.raise_for_status()
+        f = open(full_fn, 'wb')
+        f.write(resp.content)
+        time.sleep(0.2)
+
+
+if __name__ == '__main__':
+    # import_all()
+    walk_files()
