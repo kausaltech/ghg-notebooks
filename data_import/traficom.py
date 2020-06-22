@@ -1,92 +1,10 @@
+import os
 import fastparquet
 import pandas as pd
 import numpy as np
-
-
-def fetch_road_vehicle_register(fname, quarter):
-    local_fname = 'data/traficom/%s' % fname
-    try:
-        with open(local_fname, 'r') as f:  # noqa
-            url_or_fname = local_fname
-    except Exception:
-        url_or_fname = 'http://trafiopendata.97.fi/opendata/%s' % fname
-
-    dtypes = {
-        'ensirekisterointipvm': str,
-        'variantti': str,
-        'versio': str,
-        'kayttoonottopvm': str,
-        'mallimerkinta': str,
-        'kaupallinenNimi': str,
-        'tyyppihyvaksyntanro': str,
-        'valmistenumero2': str,
-        'jarnro': np.int32,
-        'suurinNettoteho': np.float32,
-    }
-    bool_dtypes = ['ahdin', 'sahkohybridi']
-    int8_dtypes = ['ovienLukumaara', 'istumapaikkojenLkm', 'sylintereidenLkm', 'vaihteidenLkm']
-    int32_dtypes = [
-        'omamassa', 'teknSuurSallKokmassa', 'tieliikSuurSallKokmassa', 'ajonKokPituus', 'ajonLeveys', 'ajonKorkeus', 'iskutilavuus',
-        'Co2', 'matkamittarilukema',
-    ]
-    cat_dtypes = [
-        'ajoneuvoluokka', 'ajoneuvoryhma', 'ajoneuvonkaytto', 'sahkohybridinluokka', 'korityyppi', 'ohjaamotyyppi', 'kayttovoima',
-        'merkkiSelvakielinen', 'vaihteisto', 'voimanvalJaTehostamistapa', 'yksittaisKayttovoima', 'kunta',
-    ]
-    for col in int8_dtypes:
-        dtypes[col] = np.float32
-    for col in int32_dtypes:
-        dtypes[col] = np.float32
-    for col in cat_dtypes:
-        dtypes[col] = 'category'
-    for col in bool_dtypes:
-        dtypes[col] = str
-
-    print('Reading %s' % url_or_fname)
-    if quarter > '2015':
-        delimiter = ';'
-    else:
-        delimiter = ','
-    df = pd.read_csv(url_or_fname, header=0, delimiter=delimiter, dtype=dtypes, encoding='iso8859-15', error_bad_lines=False)
-
-    cat_map = {key: val[2] for key, val in KAYTTOVOIMA_CODES.items()}
-    print('kayttovoima')
-    df['kayttovoima'] = df['kayttovoima'].cat.rename_categories(cat_map)
-    print('kunta')
-    df['kunta'] = df['kunta'].cat.rename_categories(KUNTA_CODES)
-    print('class')
-    df['class'] = df['ajoneuvoluokka'].map(AJONEUVOLUOKKA_CODES).astype('category')
-
-    print('kayttoonottopvm')
-    df['kayttoonottopvm'] = df['kayttoonottopvm'].str.replace('0000', '1231')
-    df['kayttoonottopvm'] = pd.to_datetime(df['kayttoonottopvm'], format='%Y%m%d', errors='coerce')
-    print('ensirekisterointipvm')
-    df['ensirekisterointipvm'] = pd.to_datetime(df['ensirekisterointipvm'], format='%Y-%m-%d')
-
-    for col in int32_dtypes:
-        print(col)
-        df[col] = df[col].astype('Int32')
-
-    for col in int8_dtypes:
-        print(col)
-        df[col] = df[col].where(df[col] < 127).round().astype('Int8')
-
-    for col in bool_dtypes:
-        print(col)
-        df[col] = df[col].map(dict(true=1, false=0)).astype('Int8')
-
-    object_encoding = {}
-
-    for col, dtype in df.dtypes.iteritems():
-        if dtype.name not in ('Int8', 'Int32'):
-            object_encoding[col] = 'infer'
-            continue
-        print(col)
-        object_encoding[col] = 'int32'
-        df[col] = df[col].astype(object)
-
-    print('writing')
-    fastparquet.write('/tmp/out.pq', df, compression='snappy', object_encoding=object_encoding)
+import quilt
+from pandas_pcaxis.pxweb_api import PXWebAPI
+from utils.quilt import update_node_from_pcaxis
 
 
 KAYTTOVOIMA_CODES = {
@@ -519,18 +437,145 @@ AJONEUVOLUOKKA_CODES = {
     'T5': 'Tractor',
 }
 
+EV_HYBRID_CLASS = {
+    '01': 'Pluggable',
+    '02': 'Non-pluggable',
+    '03': 'Pluggable fuel cell',
+    '04': 'Non-pluggable fuel cell'
+}
+
+
+def fetch_road_vehicle_register(fname, quarter, outfn):
+    local_fname = 'data/traficom/%s' % fname
+    try:
+        with open(local_fname, 'r') as f:  # noqa
+            url_or_fname = local_fname
+    except Exception:
+        url_or_fname = 'http://trafiopendata.97.fi/opendata/%s' % fname
+
+    dtypes = {
+        'ensirekisterointipvm': str,
+        'variantti': str,
+        'versio': str,
+        'kayttoonottopvm': str,
+        'mallimerkinta': str,
+        'kaupallinenNimi': str,
+        'tyyppihyvaksyntanro': str,
+        'valmistenumero2': str,
+        'sahkohybridinluokka': str,
+        'jarnro': np.int32,
+        'suurinNettoteho': np.float32,
+    }
+    bool_dtypes = ['ahdin', 'sahkohybridi']
+    int8_dtypes = ['ovienLukumaara', 'istumapaikkojenLkm', 'sylintereidenLkm', 'vaihteidenLkm']
+    int32_dtypes = [
+        'omamassa', 'teknSuurSallKokmassa', 'tieliikSuurSallKokmassa', 'ajonKokPituus', 'ajonLeveys', 'ajonKorkeus', 'iskutilavuus',
+        'Co2', 'matkamittarilukema',
+    ]
+    cat_dtypes = [
+        'ajoneuvoluokka', 'ajoneuvoryhma', 'ajoneuvonkaytto', 'sahkohybridinluokka', 'korityyppi', 'ohjaamotyyppi', 'kayttovoima',
+        'merkkiSelvakielinen', 'vaihteisto', 'voimanvalJaTehostamistapa', 'yksittaisKayttovoima', 'kunta',
+    ]
+    for col in int8_dtypes:
+        dtypes[col] = np.float32
+    for col in int32_dtypes:
+        dtypes[col] = np.float32
+    for col in cat_dtypes:
+        dtypes[col] = 'category'
+    for col in bool_dtypes:
+        dtypes[col] = str
+
+    print('Reading %s' % url_or_fname)
+    if quarter > '2015':
+        delimiter = ';'
+    else:
+        delimiter = ','
+    df = pd.read_csv(url_or_fname, header=0, delimiter=delimiter, dtype=dtypes, encoding='iso8859-15', error_bad_lines=False)
+
+    cat_map = {key: val[2] for key, val in KAYTTOVOIMA_CODES.items()}
+    print('kayttovoima')
+    df['kayttovoima'] = df['kayttovoima'].cat.rename_categories(cat_map)
+    print('sahkohybridinluokka')
+    df['sahkohybridinluokka'] = df['sahkohybridinluokka'].cat.rename_categories(EV_HYBRID_CLASS)
+    print('kunta')
+    df['kunta'] = df['kunta'].cat.rename_categories(KUNTA_CODES)
+    print('class')
+    df['class'] = df['ajoneuvoluokka'].map(AJONEUVOLUOKKA_CODES).astype('category')
+
+    print('kayttoonottopvm')
+    df['kayttoonottopvm'] = df['kayttoonottopvm'].str.replace('0000', '1231')
+    df['kayttoonottopvm'] = pd.to_datetime(df['kayttoonottopvm'], format='%Y%m%d', errors='coerce')
+    print('ensirekisterointipvm')
+    df['ensirekisterointipvm'] = pd.to_datetime(df['ensirekisterointipvm'], format='%Y-%m-%d')
+
+    for col in int32_dtypes:
+        print(col)
+        df[col] = df[col].astype('Int32')
+
+    for col in int8_dtypes:
+        print(col)
+        df[col] = df[col].where(df[col] < 127).round().astype('Int8')
+
+    for col in bool_dtypes:
+        print(col)
+        df[col] = df[col].map(dict(true=1, false=0)).astype('Int8')
+
+    object_encoding = {}
+
+    for col, dtype in df.dtypes.iteritems():
+        if dtype.name not in ('Int8', 'Int32'):
+            object_encoding[col] = 'infer'
+            continue
+        print(col)
+        object_encoding[col] = 'int32'
+        df[col] = df[col].astype(object)
+
+    print('writing')
+    fastparquet.write(outfn, df, compression='snappy', object_encoding=object_encoding)
+
+
+PXWEB_TABLES = (
+    ('TraFi/Liikennekaytossa_olevat_ajoneuvot', '010_kanta_tau_101'),
+    ('TraFi/Ensirekisteroinnit', '020_ensirek_tau_102'),
+)
+
+QUILT_DATASET = 'jyrjola/traficom'
+
+
+def refresh_pxweb_datasets():
+    import requests_cache
+    requests_cache.install_cache()
+
+    api = PXWebAPI('http://trafi2.stat.fi/PXWeb', 'fi')
+    # print(api.list_topics('TraFi/Ensirekisteroinnit'))
+    # exit()
+
+    for path, table in PXWEB_TABLES:
+        print(path, table)
+        pxf = api.get_table('%s/%s.px' % (path, table))
+        table = 'tf%s' % table
+        root_node = update_node_from_pcaxis(QUILT_DATASET, table, pxf)
+
+    quilt.build(QUILT_DATASET, root_node)
+    quilt.push(QUILT_DATASET, is_public=True)
+
 
 VEHICLE_URLS = [
     ('http://trafiopendata.97.fi/opendata/AvoinData31-1-2015-2.zip', '2014q4'),
     ('http://trafiopendata.97.fi/opendata/AvoinData20160101.zip', '2015q4'),
+    ('http://trafiopendata.97.fi/opendata/171009_Tieliikenne_5_0.zip', '2017q3'),
     ('http://trafiopendata.97.fi/opendata/20180425_Tieliikenne_5.2.zip', '2018q1'),
     ('http://trafiopendata.97.fi/opendata/10072018_Ajoneuvojen_avoin_data_5_3.zip', '2018q2'),
-    # ('http://trafiopendata.97.fi/opendata/Tieliikenteen_avoindata_5.4.zip', '2018q3'),
+    ('http://trafiopendata.97.fi/opendata/Tieliikenteen_avoindata_5_4.zip', '2018q3'),
     ('http://trafiopendata.97.fi/opendata/Tieliikenne_Avoin_Data_5.6.zip', '2019q1'),
     ('http://trafiopendata.97.fi/opendata/TieliikenneAvoinData_5_8.zip', '2019q3'),
 ]
 
+
 if __name__ == '__main__':
+    refresh_pxweb_datasets()
+    exit()
+
     import quilt
     try:
         pass
@@ -538,17 +583,21 @@ if __name__ == '__main__':
     except Exception:
         pass
 
+    FORCE_QUARTERS = ['2019q3']
+
     # quilt.push('jyrjola/traficom', is_public=True)
     from quilt.data.jyrjola import traficom  # noqa
 
     for url, quarter in VEHICLE_URLS:
         print(url)
         dataset_name = 'vehicle_register_%s' % quarter
-        if dataset_name in traficom._keys():
+        if dataset_name in traficom._keys() and quarter not in FORCE_QUARTERS:
             print('skipping')
             continue
-        fetch_road_vehicle_register(url.split('/')[-1], quarter)
+        outfn = '/tmp/out-%s.pq' % quarter
+        if not os.path.exists(outfn):
+            fetch_road_vehicle_register(url.split('/')[-1], quarter, outfn)
         print('build')
-        quilt.build('jyrjola/traficom/%s' % dataset_name, '/tmp/out.pq')
+        quilt.build('jyrjola/traficom/%s' % dataset_name, path='/tmp/out-%s.pq' % quarter)
         print('push')
         quilt.push('jyrjola/traficom', is_public=True)
