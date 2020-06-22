@@ -223,6 +223,13 @@ MEASUREMENTS = {
         "variable_id": 92,
         "interval": HOURLY,
         "start_date": date(2009, 1, 1),
+    },
+    "electricity_consumption_emission_factor_3m": {
+        "unit": "gCO2/kWh",
+        "quantity": "emission_factor",
+        "variable_id": 266,
+        "interval": THREE_MIN,
+        "start_date": date(2019, 6, 24),
     }
 }
 
@@ -267,6 +274,11 @@ if __name__ == '__main__':
     import settings
 
     set_api_key(settings.FINGRID_API_KEY)
+
+    print(get_measurements('electricity_consumption_emission_factor_3m', datetime(2019, 6, 25), datetime(2019, 7, 25)))
+    exit()
+
+
     for name, m in [x for x in MEASUREMENTS.items() if not x[1].get('start_date')]:
         def check_date(check_date):
             start_time = datetime.combine(check_date, datetime.min.time())
