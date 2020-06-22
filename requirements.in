@@ -18,9 +18,6 @@ environs
 pytz
 psycopg2-binary
 jupytext
-modin[ray]
-ray
-psutil  # needed by ray
 numba
 python-snappy
 fastparquet
