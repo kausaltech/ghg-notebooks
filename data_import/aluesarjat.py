@@ -1,71 +1,13 @@
+import os
 import re
 import requests
 import quilt
 from datetime import datetime, timedelta
 from pandas_pcaxis import PxParser
+from pandas_pcaxis.pxweb_api import PXWebAPI
 
 from utils.quilt import update_node_from_pcaxis
 
-
-def scrape_one(dbname):
-    print('%s' % dbname)
-    dbname = dbname.replace(' ', '*;').replace('Ä', '*196;').replace('Ö', '*214;')
-    url = 'http://www.aluesarjat.fi/graph/GraphList.aspx?Path=..%s&Matrix=&Gsave=false&Gedit=false&Case=DTD' % dbname
-    resp = requests.get(url)
-    resp.raise_for_status()
-    s = resp.text
-    dbs = []
-    expr = r'file=\.\.%s(.+?\.px)"' % dbname.replace('*', r'\*')
-    for match in re.finditer(expr, s):
-        m = match.groups()[0]
-        print('\t%s' % m)
-        dbs.append('..%s/%s' % (dbname, m))
-    return dbs
-
-
-def scrape_all_px_urls():
-    url = 'http://www.aluesarjat.fi/graph/style/HEL/menu.aspx?IsGedit=false&Mpar=&Msel=&Mtype=&Langcode=FI'
-    resp = requests.get(url)
-    resp.raise_for_status()
-
-    s = resp.content.decode('utf8')
-    dbs = []
-    for match in re.finditer(r'\'(/DATABASE/\w.+?)\'', s):
-        g = match.groups()[0]
-        dbs += scrape_one(g)
-
-    urls = []
-    for db in dbs:
-        url = 'http://www.aluesarjat.fi/graph/Download.aspx?file=%s' % db
-        urls.append(url)
-    return urls
-
-
-def download_all_datasets():
-    import os
-    import settings
-
-    SKIP_URLS = [
-        "http://www.aluesarjat.fi/graph/Download.aspx?file=../DATABASE/ALUESARJAT_KAUPUNKIVERKKO/VAESTO_SAL/VAESTOENNUSTEET_SAL/B01ESPS_Vaestoennuste.px"
-    ]
-    data_dir = os.path.join(settings.DATA_DIR, 'aluesarjat')
-
-    urls = scrape_all_px_urls()
-    print(urls)
-    for url in urls:
-        if url in SKIP_URLS:
-            continue
-
-        fname = os.path.join(data_dir, url.split('/')[-1])
-        print(fname)
-        if os.path.exists(fname):
-            continue
-
-        print("downloading")
-        resp = requests.get(url)
-        resp.raise_for_status()
-        with open(fname, 'wb') as f:
-            f.write(resp.content)
 
 
 def update_quilt(quilt_path):
@@ -121,6 +63,8 @@ def update_quilt(quilt_path):
 
     root_node = None
     for file in files:
+        if 'A01S_HKI_Rak' not in file:
+            continue
         if skip_until:
             if skip_until not in file:
                 continue
@@ -144,5 +88,15 @@ def update_quilt(quilt_path):
 
 
 if __name__ == '__main__':
+    api = PXWebAPI('http://api.aluesarjat.fi', 'fi')
+    p = 'Helsingin seudun tilastot/Helsingin seutu/Väestö/Väestöennusteet/Hginseutu_VA_VE01_Vaestoennuste_PKS.px'
+    pxf = api.get_table(p)
+    path = 'jyrjola/aluesarjat'
+    fname = 'hginseutu_va_ve01_vaestoennuste_pks'
+    root_node = update_node_from_pcaxis(path, fname, pxf)
+    quilt.build(path, root_node)
+    quilt.push(path, is_public=True)
+    #p = 'Ympäristötilastot/12_Ymparistotalous/1_Taloudelliset%20tunnusluvut/T1_talousluvut.px'
+    #p = 'Helsingin%20seudun%20tilastot/Helsingin%20seutu/V%C3%A4est%C3%B6/V%C3%A4est%C3%B6ennusteet/Hginseutu_VA_VE01_Vaestoennuste_PKS.px'
     #download_all_datasets()
-    update_quilt('jyrjola/aluesarjat')
+    # update_quilt('jyrjola/aluesarjat')

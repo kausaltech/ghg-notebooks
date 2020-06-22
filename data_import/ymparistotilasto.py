@@ -1,19 +1,14 @@
 import re
 import os
-import csv
 from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
-from collections import OrderedDict
 import quilt
 from pandas_pcaxis import PxParser
+from pandas_pcaxis.pxweb_api import PXWebAPI
 
 from utils.quilt import update_node_from_pcaxis
-
-import requests_cache
-
-requests_cache.install_cache()
 
 
 def update_quilt(quilt_path):
@@ -33,8 +28,6 @@ def update_quilt(quilt_path):
     def upload_px_dataset(root_node, file):
         fname = os.path.splitext(os.path.basename(file))[0].lower()
         letter = fname[0]
-        if letter != 'e':
-            return
 
         content = open(file, 'r', encoding='windows-1252').read()
         parser = PxParser()
@@ -61,6 +54,8 @@ def update_quilt(quilt_path):
 
     root_node = None
     for file in files:
+        if 'l27' not in file.lower():
+            continue
         if skip_until:
             if skip_until not in file:
                 continue
@@ -120,6 +115,21 @@ def scrape_all_px_urls():
 
 
 if __name__ == '__main__':
-    urls = scrape_all_px_urls()
-    print(urls)
-    # update_quilt('jyrjola/ymparistotilastot')
+    api = PXWebAPI('http://api.aluesarjat.fi', 'fi')
+    # p = 'Ympäristötilastot/05_Liikenne/3_Autokanta'
+    # from pprint import pprint
+    # pprint(api.list_topics(p))
+
+    p = 'Ympäristötilastot/05_Liikenne/3_Autokanta/L35_autot_CO2_luokat.px'
+    pxf = api.get_table(p)
+    path = 'jyrjola/ymparistotilastot'
+    fname = 'l35_autot_co2_luokat'
+    root_node = update_node_from_pcaxis(path, fname, pxf)
+
+    p = 'Ympäristötilastot/05_Liikenne/3_Autokanta/L10_autotiheys.px'
+    pxf = api.get_table(p)
+    path = 'jyrjola/ymparistotilastot'
+    fname = 'l10_autotiheys'
+    root_node = update_node_from_pcaxis(path, fname, pxf)
+    quilt.build(path, root_node)
+    quilt.push(path, is_public=True)
