@@ -1,0 +1,76 @@
+,year,val,cause_name
+0,1990,475873.1719675551,Cardiopulmonary mortality
+1,1991,460524.08113642986,Cardiopulmonary mortality
+2,1992,453665.41534969327,Cardiopulmonary mortality
+3,1993,443445.40716033534,Cardiopulmonary mortality
+4,1994,421206.7017864863,Cardiopulmonary mortality
+5,1995,423546.03961214377,Cardiopulmonary mortality
+6,1996,412686.655751567,Cardiopulmonary mortality
+7,1997,409277.53240578563,Cardiopulmonary mortality
+8,1998,404303.16514062823,Cardiopulmonary mortality
+9,1999,398731.55398130143,Cardiopulmonary mortality
+10,2000,394276.9031389732,Cardiopulmonary mortality
+11,2001,384340.7050888353,Cardiopulmonary mortality
+12,2002,380334.67938177625,Cardiopulmonary mortality
+13,2003,376762.07105372765,Cardiopulmonary mortality
+14,2004,376504.77122755797,Cardiopulmonary mortality
+15,2005,372902.2001418158,Cardiopulmonary mortality
+16,2006,367015.09094960697,Cardiopulmonary mortality
+17,2007,370135.4459270378,Cardiopulmonary mortality
+18,2008,369023.5633944265,Cardiopulmonary mortality
+19,2009,368101.93449907703,Cardiopulmonary mortality
+20,2010,367407.34522292187,Cardiopulmonary mortality
+21,2011,362778.43230495544,Cardiopulmonary mortality
+22,2012,360042.37897212856,Cardiopulmonary mortality
+23,2013,357699.24449502944,Cardiopulmonary mortality
+24,2014,351520.99206773087,Cardiopulmonary mortality
+25,2015,347628.0939429763,Cardiopulmonary mortality
+26,2016,355558.1062636137,Cardiopulmonary mortality
+27,2017,363065.7171400606,Cardiopulmonary mortality
+0,1990,1646325.8784349195,Total mortality
+1,1991,1634001.6877211267,Total mortality
+2,1992,1629111.4314158892,Total mortality
+3,1993,1614828.0779300581,Total mortality
+4,1994,1583841.2678012042,Total mortality
+5,1995,1599433.7190089864,Total mortality
+6,1996,1591152.690769318,Total mortality
+7,1997,1598022.7081148913,Total mortality
+8,1998,1598248.7417214552,Total mortality
+9,1999,1597685.851978433,Total mortality
+10,2000,1598632.041526092,Total mortality
+11,2001,1581725.7623720153,Total mortality
+12,2002,1576324.990271016,Total mortality
+13,2003,1579227.397474947,Total mortality
+14,2004,1597114.1538255154,Total mortality
+15,2005,1596384.5560692153,Total mortality
+16,2006,1585185.1555555407,Total mortality
+17,2007,1600179.284659855,Total mortality
+18,2008,1601446.010304472,Total mortality
+19,2009,1601635.9818994405,Total mortality
+20,2010,1602867.1696117157,Total mortality
+21,2011,1594872.2419646555,Total mortality
+22,2012,1593090.4813328637,Total mortality
+23,2013,1589833.428351952,Total mortality
+24,2014,1577742.7058010981,Total mortality
+25,2015,1567217.5978999876,Total mortality
+26,2016,1587188.4522071762,Total mortality
+27,2017,1605238.0019185946,Total mortality
+0,2008,42651.71,Lung cancer mortality
+1,2009,43159.42,Lung cancer mortality
+2,2010,43754.29,Lung cancer mortality
+3,2011,43621.28,Lung cancer mortality
+4,2012,43759.33,Lung cancer mortality
+5,2013,44319.12,Lung cancer mortality
+6,2014,43718.99,Lung cancer mortality
+7,2015,43327.07,Lung cancer mortality
+8,2016,44461.26,Lung cancer mortality
+9,2017,45680.82,Lung cancer mortality
+0,2018,363065.7171400606,Cardiopulmonary mortality
+1,2019,363065.7171400606,Cardiopulmonary mortality
+2,2020,363065.7171400606,Cardiopulmonary mortality
+3,2018,1605238.0019185946,Total mortality
+4,2019,1605238.0019185946,Total mortality
+5,2020,1605238.0019185946,Total mortality
+6,2018,45680.82,Lung cancer mortality
+7,2019,45680.82,Lung cancer mortality
+8,2020,45680.82,Lung cancer mortality
