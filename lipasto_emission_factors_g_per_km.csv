@@ -1,0 +1,100 @@
+mode,gas,place,result
+private car,CO,road,0.43
+private car,CO,street,0.48
+private car,HC,road,0.02
+private car,HC,street,0.04
+private car,NOx,road,0.28
+private car,NOx,street,0.44
+private car,PM2.5,road,0.0094
+private car,PM2.5,street,0.015
+private car,CH4,road,0.0011
+private car,CH4,street,0.002
+private car,N2O,road,0.0021
+private car,N2O,street,0.0059
+private car,SO2,road,0.00059
+private car,SO2,street,0.00089
+private car,CO2,road,132
+private car,CO2,street,202
+private car,CO2e,road,133
+private car,CO2e,street,203
+bus,CO,road,0.66
+bus,CO,street,1.1
+bus,HC,road,0.1
+bus,HC,street,0.17
+bus,NOx,road,3.2
+bus,NOx,street,5.3
+bus,PM2.5,road,0.051
+bus,PM2.5,street,0.108
+bus,CH4,road,0.0024
+bus,CH4,street,0.0048
+bus,N2O,road,0.021
+bus,N2O,street,0.032
+bus,SO2,road,0.0019
+bus,SO2,street,0.0031
+bus,CO2,road,568
+bus,CO2,street,939
+bus,CO2e,road,574
+bus,CO2e,street,949
+motorcycle,CO,street and road,7.1
+motorcycle,HC,street and road,1
+motorcycle,NOx,street and road,0.19
+motorcycle,PM2.5,street and road,0.031
+motorcycle,CH4,street and road,0.19
+motorcycle,N2O,street and road,0.002
+motorcycle,SO2,street and road,0.00055
+motorcycle,CO2,street and road,107
+motorcycle,CO2e,street and road,112
+moped,CO,street and road,4.4
+moped,HC,street and road,3.3
+moped,NOx,street and road,0.16
+moped,PM2.5,street and road,0.05
+moped,CH4,street and road,0.22
+moped,N2O,street and road,0.0001
+moped,SO2,street and road,0.00032
+moped,CO2,street and road,62
+moped,CO2e,street and road,68
+microcar,CO,street and road,2
+microcar,HC,street and road,1
+microcar,NOx,street and road,0.65
+microcar,PM2.5,street and road,0.1
+microcar,CH4,street and road,0.15
+microcar,N2O,street and road,0.001
+microcar,SO2,street and road,0.00043
+microcar,CO2,street and road,124
+microcar,CO2e,street and road,128
+van,CO,road,0.076
+van,HC,road,0.023
+van,NOx,road,0.86
+van,PM2.5,road,0.067
+van,CH4,road,0.001
+van,N2O,road,0.0041
+van,SO2,road,0.00069
+van,CO2,road,207
+van,CO2e,road,208
+van,CO,street,0.21
+van,HC,street,0.042
+van,NOx,street,1.1
+van,PM2.5,street,0.41
+van,CH4,street,0.0016
+van,N2O,street,0.0079
+van,SO2,street,0.00093
+van,CO2,street,276
+van,CO2e,street,279
+truck,CO,road,0.39
+truck,HC,road,0.077
+truck,NOx,road,5.3
+truck,PM2.5,road,0.048
+truck,CH4,road,0.0045
+truck,N2O,road,0.029
+truck,SO2,road,0.0032
+truck,CO2,road,953
+truck,CO2e,road,962
+truck,CO,street,1.3
+truck,HC,street,0.31
+truck,NOx,street,9.7
+truck,PM2.5,street,0.15
+truck,CH4,street,0.012
+truck,N2O,street,0.034
+truck,SO2,street,0.0055
+truck,CO2,street,1652
+truck,CO2e,street,1662

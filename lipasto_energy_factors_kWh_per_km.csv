@@ -1,0 +1,12 @@
+mode,place,result
+private car,road,0.54
+private car,street,0.82
+bus,road,2.4
+bus,street,4
+van,road,0.88
+van,street,1.2
+truck,road,4
+truck,street,7
+motorcycle,street and road,0.416666666666667
+moped,street and road,0.247222222222222
+microcar,street and road,0.527777777777778
