@@ -25,3 +25,4 @@ openpyxl
 owslib
 lxml
 dvc-pandas
+pandas-pcaxis

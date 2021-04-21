@@ -218,6 +218,8 @@ jupytext==1.11.1
     # via -r requirements.in
 kiwisolver==1.3.1
     # via matplotlib
+lark-parser==0.11.2
+    # via pandas-pcaxis
 llvmlite==0.36.0
     # via numba
 lxml==4.6.3
@@ -296,6 +298,8 @@ packaging==20.9
     #   jupyterlab-server
     #   pint
     #   quilt
+pandas-pcaxis==0.1
+    # via -r requirements.in
 pandas==1.2.4
     # via
     #   -r requirements.in
@@ -303,6 +307,7 @@ pandas==1.2.4
     #   dvc-pandas
     #   fastparquet
     #   geopandas
+    #   pandas-pcaxis
     #   quilt
 pandocfilters==1.4.3
     # via nbconvert
@@ -420,6 +425,7 @@ requests==2.25.1
     #   dvc
     #   jupyterlab-server
     #   owslib
+    #   pandas-pcaxis
     #   python-benedict
     #   python-fsutil
     #   quilt

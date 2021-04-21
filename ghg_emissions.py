@@ -6,8 +6,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
-#       format_version: '1.2'
-#       jupytext_version: 1.2.4
+#       format_version: '1.3'
+#       jupytext_version: 1.11.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -25,7 +25,7 @@
 # linear regression model based on historical data.
 
 # %%
-INPUT_DATASETS = ['jyrjola/hsy/pks_khk_paastot']
+INPUT_DATASETS = ['hsy/pks_khk_paastot']
 
 import math
 import re
@@ -34,19 +34,32 @@ import scipy.stats
 import pandas as pd
 import numpy as np
 import importlib
-from utils.quilt import load_datasets
+from utils.dvc import load_datasets
 
 import plotly
 import plotly.graph_objs as go
 import cufflinks as cf
-
-import aplans_graphs
 
 plotly.offline.init_notebook_mode(connected=True)
 cf.set_config_file(offline=True)
 
 hsy_ghg_emissions = load_datasets(INPUT_DATASETS)
 
+# %%
+df = hsy_ghg_emissions
+
+# %%
+df = df[df.Kaupunki == 'Helsinki']
+df = df.groupby(['Vuosi', 'Sektori1'])['Päästöt'].sum()
+
+# %%
+# load_datasets('tampere/scenarios/bau')
+df = pd.DataFrame([[1,2,3], [False] * 3], ['a', 'b', 'c'])
+
+
+# %%
+
+# %%
 
 # %%
 def generate_forecast_series(historical_series, year_until):
@@ -164,7 +177,7 @@ def estimate_ghg_emissions():
     display(left_to_go)
 
     latest_year = sum_emissions.index.max()
-    sum_emissions = sum_emissions.loc[sum_emissions.index > latest_year - 15]
+    sum_emissions = sum_emissions.loc[sum_emissions.index > latest_year - 20]
     display(sum_emissions)
 
     # Estimate GHG emissions based on a linear regression over the current
@@ -181,7 +194,7 @@ def estimate_ghg_emissions():
     # The first day when we finally reach our target
     day_when_target_reached = daily_forecast[daily_forecast < target].head(1)
     target_day = pd.Series(target, index=[2035])
-    # generate_plot(ghg_emissions, forecast, target_day, day_when_target_reached)
+    generate_plot(ghg_emissions, forecast, target_day, day_when_target_reached)
     print(day_when_target_reached)
 
 estimate_ghg_emissions()
@@ -204,3 +217,29 @@ aplans_graphs.post_values('ghg_emissions_heating_helsinki', main_df['Lämmitys']
 s = df.query("Sektori2 == 'Kaukolämpö'").set_index('Vuosi')['Päästöt']
 aplans_graphs.post_values('ghg_emissions_district_heating_helsinki', s)
 
+
+# %%
+df = hsy_ghg_emissions
+df = df[df.Kaupunki == "Helsinki"]
+#df = df[df.Vuosi == 2018]
+#df = df.groupby(['Vuosi', 'Sektori1', 'Sektori2', 'Sektori3']).sum()
+
+all_sectors = set(df.Sektori1.unique()) | set(df.Sektori2.unique()) | set(df.Sektori3.unique())
+edges = set()
+for row_id, row in df[df.Vuosi == 2018].iterrows():
+    edges.add((row.Sektori1, 'Päästöt'))
+    edges.add((row.Sektori2, row.Sektori1))
+    if row.Sektori3 != row.Sektori2:
+        edges.add((row.Sektori3, row.Sektori2))
+
+dag = graphviz.Digraph()
+for parent, child in edges:
+    dag.edge(parent, child)
+
+#df[df.Vuosi == 2015]
+dag.edge('Kulutussähkön energiankulutus', 'Kulutussähkö')
+dag.edge('Sähköntuotannon päästökerroin', 'Kulutussähkö')
+dag.edge('Sähköntuotannon päästökerroin', 'Metrot')
+dag.edge('Sähköntuotannon päästökerroin', 'Raitiovaunut')
+dag.edge('Sähköntuotannon päästökerroin', 'Lähijunat')
+dag
