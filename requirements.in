@@ -21,3 +21,7 @@ jupytext
 numba
 python-snappy
 fastparquet
+openpyxl
+owslib
+lxml
+dvc-pandas
