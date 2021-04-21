@@ -88,14 +88,17 @@ def update_quilt(quilt_path):
 
 
 if __name__ == '__main__':
+    import settings
+    import requests_cache
+    requests_cache.install_cache('aluesarjat')
+
+    from utils.dvc import update_dataset
     api = PXWebAPI('http://api.aluesarjat.fi', 'fi')
     p = 'Helsingin seudun tilastot/Helsingin seutu/Väestö/Väestöennusteet/Hginseutu_VA_VE01_Vaestoennuste_PKS.px'
     pxf = api.get_table(p)
     path = 'jyrjola/aluesarjat'
     fname = 'hginseutu_va_ve01_vaestoennuste_pks'
-    root_node = update_node_from_pcaxis(path, fname, pxf)
-    quilt.build(path, root_node)
-    quilt.push(path, is_public=True)
+    update_dataset('helsinki/aluesarjat/hginseutu_va_ve01_vaestoennuste_pks', pxf)
     #p = 'Ympäristötilastot/12_Ymparistotalous/1_Taloudelliset%20tunnusluvut/T1_talousluvut.px'
     #p = 'Helsingin%20seudun%20tilastot/Helsingin%20seutu/V%C3%A4est%C3%B6/V%C3%A4est%C3%B6ennusteet/Hginseutu_VA_VE01_Vaestoennuste_PKS.px'
     #download_all_datasets()

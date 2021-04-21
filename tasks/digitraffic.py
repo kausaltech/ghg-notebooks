@@ -103,7 +103,7 @@ class DigitrafficVehicleCountDaily(luigi.Task):
         super().__init__(*args, **kwargs)
         start_time = datetime.combine(self.date, datetime.min.time())
         end_time = datetime.combine(self.date, datetime.max.time())
-        local_tz = get_localzone()
+        local_tz = digitraffic.LOCAL_TZ
         self.start_time = local_tz.localize(start_time)
         self.end_time = local_tz.localize(end_time)
 

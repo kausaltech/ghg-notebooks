@@ -24,3 +24,22 @@ docker-compose up
 ```
 
 Then click on the localhost URL displayed on your console to start the notebook.
+
+
+## Development
+
+First create and activate a Python virtual environment. Then, install the
+dependencies and create the Jupyter Lab bundle:
+
+```bash
+pip install -r requirements.txt
+jupyter labextension install @jupyter-widgets/jupyterlab-manager \
+    plotlywidget jupyterlab-plotly
+```
+
+After that, you should be able to start Jupyter Lab notebook server
+with:
+
+```
+jupyter lab
+```

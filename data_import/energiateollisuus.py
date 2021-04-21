@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytz
 import pandas as pd
 import glob
+from utils.dvc import update_dataset
 
 
 LOCAL_TZ = pytz.timezone('Europe/Helsinki')
@@ -303,27 +304,14 @@ def get_electricity_production_fuel_consumption():
     return df
 
 
-def update_quilt_datasets():
-    import quilt
-    from quilt.data.jyrjola import energiateollisuus
-
+if __name__ == '__main__':
     fuel_df = get_district_heating_fuel_stats()
-    energiateollisuus._set(['district_heating_fuel'], fuel_df)
-
+    update_dataset('energiateollisuus/district_heating_fuel', fuel_df)
     production_df = get_district_heating_production_stats()
-    energiateollisuus._set(['district_heating_production'], production_df)
+    update_dataset('energiateollisuus/district_heating_production', production_df)
 
-    """
     hourly = get_electricity_production_hourly_data()
-    energiateollisuus._set(['electricity_production_hourly'], hourly)
+    update_dataset('energiateollisuus/electricity_production_hourly', hourly)
 
     el_fuel = get_electricity_production_fuel_data()
-    energiateollisuus._set(['electricity_production_fuels'], el_fuel)
-    """
-
-    quilt.build('jyrjola/energiateollisuus', energiateollisuus)
-    quilt.push('jyrjola/energiateollisuus', is_public=True)
-
-
-if __name__ == '__main__':
-    update_quilt_datasets()
+    update_dataset('energiateollisuus/electricity_production_fuels', el_fuel)

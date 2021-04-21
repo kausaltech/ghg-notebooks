@@ -5,7 +5,7 @@ import requests
 import xlrd
 import pandas as pd
 import numpy as np
-import requests_cache
+from utils.dvc import update_dataset
 
 
 def _load_xlsx_url(url):
@@ -323,20 +323,11 @@ def get_all_liisa_data():
 
 
 if __name__ == '__main__':
-    import quilt
-
-    USER = 'jyrjola'
-    PACKAGE_BASE = 'lipasto'
-
-    def build_and_push(package, df):
-        quilt.build('%s/%s/%s' % (USER, PACKAGE_BASE, package), df)
-        quilt.push('%s/%s/%s' % (USER, PACKAGE_BASE, package), is_public=True)
-
-    #df = get_car_unit_emissions().reset_index()
-    #build_and_push('car_unit_emissions', df)
+    df = get_car_unit_emissions().reset_index()
+    update_dataset('lipasto/car_unit_emissions', df)
 
     df = get_all_liisa_data()
-    build_and_push('emissions_by_municipality', df)
+    update_dataset('lipasto/emissions_by_municipality', df)
 
-    #df = get_mileage_per_engine_type().reset_index()
-    #build_and_push('mileage_per_engine_type', df)
+    df = get_mileage_per_engine_type().reset_index()
+    update_dataset('lipasto/mileage_per_engine_type', df)
