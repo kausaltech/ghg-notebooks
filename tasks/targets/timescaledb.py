@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytz
 import luigi
+from luigi.contrib.postgres import CopyToTable as PGCopyToTable
 import sqlalchemy as sa
 import pandas as pd
 from sqlalchemy.dialects.postgresql import insert
@@ -18,6 +19,7 @@ class TimescaleDBTarget(luigi.Target):
     value_columns = None
     interval = None  # in seconds
     location_column = None  # optional
+    location_type = str
 
     def __init__(self, connection_dsn, start_time, end_time, locations=None):
         self.connection_dsn = connection_dsn
@@ -52,6 +54,8 @@ class TimescaleDBTarget(luigi.Target):
             return sa.Integer
         elif klass == float:
             return sa.Float
+        elif klass == str:
+            return sa.String
         raise Exception("Invalid type: %s" % klass)
 
     def get_table(self):
@@ -62,7 +66,8 @@ class TimescaleDBTarget(luigi.Target):
         metadata = sa.MetaData(engine)
         cols = [Column(c[0], self.python_type_to_sqlalchemy(c[1]), nullable=False) for c in self.value_columns]
         if self.location_column:
-            cols.insert(0, Column(self.location_column, sa.String, nullable=False))
+            location_type = self.python_type_to_sqlalchemy(self.location_type)
+            cols.insert(0, Column(self.location_column, location_type, nullable=False))
             cols.append(sa.UniqueConstraint('time', self.location_column))
             time_col = Column('time', sa.TIMESTAMP(timezone=True), nullable=False)
         else:
