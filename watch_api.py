@@ -14,6 +14,10 @@ env.read_env()
 logger = logging.getLogger(__name__)
 
 
+class NotFoundError(Exception):
+    pass
+
+
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
@@ -39,7 +43,7 @@ class KausalWatchAPI:
             if len(data) > 1:
                 raise Exception('Multiple results returned for %s' % path)
             if not len(data):
-                raise Exception('No result for %s' % path)
+                raise NotFoundError('No result for %s' % path)
             data = data[0]
 
         return data
@@ -56,16 +60,12 @@ class KausalWatchAPI:
             '%s/%s/' % (self.base_url, path),
             json=data, headers=headers
         )
-        if resp.status_code != 200:
+        if resp.status_code not in (200, 201):
+            print(resp.status_code)
             print(resp.text)
             print(resp.json())
         resp.raise_for_status()
-
-        resp = requests.get(url='%s/%s/' % (self.base_url, path), params=params)
-        resp.raise_for_status()
-        data = resp.json()['results']
-
-        return data
+        return resp.json()
 
     def get_organization(self, name):
         return self.rest_get(
@@ -75,14 +75,9 @@ class KausalWatchAPI:
     def get_plan(self, identifier):
         return self.rest_get('plan', params=dict(identifier=identifier), expect_one_result=True)
 
-    def get_indicator(self, identifier=None, organization=None, name=None):
-        try:
-            ind_id = int(identifier)
-        except ValueError:
-            ind_id = None
-
-        if ind_id is not None:
-            data = self.rest_get('indicator/%d' % identifier)
+    def get_indicator(self, id=None, identifier=None, organization=None, name=None):
+        if id is not None:
+            data = self.rest_get('indicator/%d' % id)
             return data
 
         params = {}
@@ -93,16 +88,26 @@ class KausalWatchAPI:
         if name:
             params['name'] = name
 
-        return self.rest_get('indicator', params=params, except_one_result=True)
+        try:
+            ind = self.rest_get('indicator', params=params, expect_one_result=True)
+        except NotFoundError:
+            return None
+        return ind
 
     def create_indicator(self, data):
-        self.rest_post('indicator', data=data)
+        return self.rest_post('indicator', data=data)
 
     def post_indicator_values(self, indicator, df_or_series):
         if isinstance(df_or_series, pd.Series):
             s = df_or_series
-            df = pd.DataFrame(s.values, index=pd.to_datetime(s.index.astype('str')), columns=['value'])
-            df.index.name = 'date'
+            idx = s.index.astype(str)
+            if '-' not in idx[0]:
+                idx_name = 'year'
+            else:
+                idx_name = 'date'
+                idx = pd.to_datetime(idx)
+            df = pd.DataFrame(s.values, index=idx, columns=['value'])
+            df.index.name = idx_name
             df = df.reset_index()
         else:
             df = df_or_series.copy()
@@ -126,37 +131,39 @@ class KausalWatchAPI:
         df = df[['date', 'value']].copy()
         df.date = df.date.dt.date.map(lambda x: x.isoformat())
 
-        print(df)
-        yn = input('Press y/n: ')
-        if yn.strip() != 'y':
-            print('okay, no update')
-            return
-
         data = df.to_dict('records')
         for d in data:
             d['categories'] = []
 
-        print("Values posted successfully.")
+        self.rest_post('indicator/%d/values' % indicator['id'], data=data)
 
 
 if __name__ == '__main__':
     api = KausalWatchAPI()
     org = api.get_organization(name='Tampereen kaupunki')
     plan = api.get_plan(identifier='tampere-ilmasto')
-    api.create_indicator(dict(
-        name='Liikenteen khk-päästöt',
-        organization=org['id'],
-        unit='kt (CO₂e.)/a',
-        levels=[dict(plan=plan['id'], level='strategic')]
-    ))
+    upstream = api.get_indicator(organization=org, name='Kasvihuonekaasupäästöt Tampereella')
 
-    """
+    try:
+        ind = api.get_indicator(organization=org, name='Liikenteen khk-päästöt')
+    except NotFoundError:
+        ind = api.create_indicator(dict(
+            name='Liikenteen khk-päästöt',
+            organization=org['id'],
+            unit='kt (CO₂e.)/a',
+            levels=[dict(plan=plan['id'], level='strategic')],
+            related_effects=[dict(
+                effect_type='part_of',
+                effect_indicator=upstream['id'],
+                confidence_level='high'
+            )],
+        ))
+
     import pandas as pd
 
     df = pd.DataFrame([
-        {'time': '2019-01-01', 'value': 15},
-        {'time': '2018-01-01', 'value': 12}
+        {'date': '2019-12-31', 'value': 15},
+        {'date': '2018-12-31', 'value': 12}
     ])
-    df.time = pd.to_datetime(df.time)
-    post_values('ghg_emissions_helsinki', df)
-    """
+    df.date = pd.to_datetime(df.date)
+    api.post_indicator_values(ind, df)
