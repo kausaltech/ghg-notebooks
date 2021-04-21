@@ -14,15 +14,15 @@ def read_hsy_emissions():
     assert REQUIRED_COLS.issubset(set(df.columns))
 
     df.drop('PKS', level='Kaupunki', inplace=True)
-    df = df.drop(columns='Unnamed: 7')
+    drop_cols = [col for col in df.columns if 'Unnamed' in col]
+    df = df.drop(columns=drop_cols)
 
     return df
 
 
 if __name__ == '__main__':
-    import quilt
+    from utils.dvc import update_dataset
 
     df = read_hsy_emissions().reset_index()
-    print(df)
-    quilt.build('jyrjola/hsy/pks_khk_paastot', df)
-    quilt.push('jyrjola/hsy/pks_khk_paastot', is_public=True)
+
+    update_dataset('hsy/pks_khk_paastot', df)

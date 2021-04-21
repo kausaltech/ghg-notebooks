@@ -6,8 +6,10 @@ from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from pandas_pcaxis import PxParser
 
+from aplans_graphs import post_values
+
 transport = RequestsHTTPTransport(
-    url='http://localhost:8000/v1/graphql/', verify=True
+    url='https://api.watch.kausal.tech/v1/graphql/', verify=True
 )
 
 client = Client(transport=transport, fetch_schema_from_transport=True)
@@ -42,8 +44,11 @@ INDICATORS = [{
     'name': 'Helsingin satama-alueiden CO2-päästöt',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/l018-laivaliikenne-paastot.px',
     'px_topic': 'Ympäristötilastot/02_Energia/3_Energiaperainen_kuormitus/L018_laivaliikenne_paastot.px',
+    'query': """Sektori == "Satamatoiminnat yhteensä" & Päästölaji in ['NOx (t)', 'CO (t)', 'CO2 (t)', 'HC (t)', 'SO2 (t)']""",
+    'lambda_over': 'Päästölaji',
+    'lambda': lambda x: x['CO2 (t)'] * 1.0,
     'indicator_id': 290,
-    'skip': True,
+    # FIXME: others are not GHGs?
 }, {
     'name': 'Kaukolämmönkulutuksen kasvihuonekaasupäästöt (HSY)',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/i01-kulutusperusteiset-kokonais-asukaskohtaiset.px',
@@ -71,6 +76,7 @@ INDICATORS = [{
     'query': 'Kunta == "Helsinki"',
     'indicator_id': 371,
     'lambda_over': 'Käyttövoima',
+    # calc correct
     'lambda': lambda x: ((x['Bensiini/sähkö (ladattava hybridi)'] + x['Diesel/sähkö (ladattava)'] + x['Sähkö']) / x['Yhteensä']) * 100,
     # XXXXX: Problem in data
 }, {
@@ -129,9 +135,13 @@ INDICATORS = [{
     'px_file': 'data/aluesarjat_px/ymparistotilastot/05-liikenne/2-liikennemaarat/l11-joukkoliikennematkat.px',
     'px_topic': 'Ympäristötilastot/05_Liikenne/2_Liikennemaarat/L11_joukkoliikennematkat.px',
     'indicator_id': 152,
-    'query': 'Kunta == "Helsinki" & Kulkutapa == "Yhteensä"',
-    'skip': True,
-    # FIXME
+    'query': 'Kunta == "Helsinki"',
+    'lambda_over': 'Kulkutapa',
+    'lambda': lambda x: (
+        x['Raitioliikenne'] + x['Sisäinen bussiliikenne'] + \
+        (0 if x['Kutsuplus'] == '..' else x['Kutsuplus']) + \
+        x['Metroliikenne'] + x['Suomenlinnan lautta']
+    )
 }, {
     'name': 'Pyöräväylien pituus',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/6-pack/liikenne/l3-pyoratieverkko.px',
@@ -210,13 +220,13 @@ INDICATORS = [{
     'name': 'Kerrosala, joka on kaavoitettu raideliikenteen lähelle',
     'indicator_id': 52,
     'skip': True,
+    # FIXME: Katsotaan myöhemmin
 }, {
     'name': 'Helen Oy:n sähköntuotannon kasvihuonekaasupäästöt',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/e7-energiantuotanto-paastot.px',
     'px_topic': 'Ympäristötilastot/02_Energia/3_Energiaperainen_kuormitus/E7_energiantuotanto_paastot.px',
     'indicator_id': 81,
-    'skip': True,
-    # FIXME: Millä menetelmällä jyvitetään
+    # FIXME: ---> Yhdistetään yhdeksi mittariksi: energiantuotanto
     'query': 'Energialaitos == "Helen" & Päästö == "CO2 (1000 t/a)"',
 }, {
     'name': 'Helen Oy:n kaukolämmöntuotannon kasvihuonekaasupäästöt',
@@ -262,6 +272,7 @@ INDICATORS = [{
     'name': 'Vähäpäästöisten ajoneuvojen tunnusten osuus asukas- ja yrityspysäköintitunnuksista',
     'indicator_id': 229,
     'skip': True,
+    # FIXME: Vuodenvaihteen jälkeen
 }, {
     'name': 'Henkilöautoilun kasvihuonekaasupäästöt',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/l1-liikenne-khk-paastot.px',
@@ -280,7 +291,8 @@ INDICATORS = [{
     'px_topic': 'Ympäristötilastot/02_Energia/3_Energiaperainen_kuormitus/I01_kulutusperusteiset_kokonais_asukaskohtaiset.px',
     'indicator_id': 261,
     'skip': True,
-    # Not in dataset
+    # FIXME: Palataan vuodenvaihteen jälkeen
+    # Otetaan ehkä SYKE:n datasta?
 }, {
     'name': 'Sähkönkulutuksen kasvihuonekaasupäästöt (HSY)',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/i01-kulutusperusteiset-kokonais-asukaskohtaiset.px',
@@ -325,26 +337,31 @@ INDICATORS = [{
     'px_topic': 'Ympäristötilastot/01_Maankaytto/2_1_rakennukset/A01S_HKI_Rakennuskanta.px',
     'indicator_id': 12,
     'skip': True,
+    # FIXME: Remove indicator
 }, {
     'name': 'Rakennusala lämmitysmuodoittain',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/2-rakennuskanta/e25-lammitysmuodot-uudisrakennustyyppi.px',
     'px_topic': 'Ympäristötilastot/02_Energia/2_Rakennuskanta/E25_lammitysmuodot_uudisrakennustyyppi.px',
     'indicator_id': 13,
     'skip': True,
+    # FIXME: Remove indicator
 }, {
     'name': 'Helsingin rakennusala',
-    'px_file': 'data/aluesarjat_px/ymparistotilastot/01-maankaytto/2-1-rakennukset/a01s-hki-rakennuskanta.px',
-    'px_topic': 'Ympäristötilastot/01_Maankaytto/2_1_rakennukset/A01S_HKI_Rakennuskanta.px',
+    'px_file': 'data/aluesarjat_px/helsingin-seudun-tilastot/helsingin-seutu/asunto-ja-rakennuskanta/rakennuskanta/hginseutu-ar-rr01-rakennukset-kayttark-rvuosi.px',
+    'px_topic': 'Helsingin seudun tilastot/Helsingin seutu/Asunto ja rakennuskanta/Rakennuskanta/Hginseutu_AR_RR01_Rakennukset_kayttark_rvuosi.px',
     'indicator_id': 68,
-    'query': 'Alue == "091 Helsinki" & `Käyttötarkoitus ja kerrosluku` == "Kaikki rakennukset" & Yksikkö == "Kerrosala" & Valmistumisvuosi == "Yhteensä"'
+    'query': 'Alue == "Helsinki" & `Käyttötarkoitus ja kerrosluku` == "Kaikki rakennukset" & Yksikkö == "Kerrosala" & Valmistumisvuosi == "Yhteensä"',
+    'unit': 'M m2',
+    # FIXME: --> Helsingin rakennusten kerrosala
+    'map': lambda x: x / 1000000,
 }, {
     'name': 'Raideliikenteen kasvihuonekaasupäästöt (HSY)',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/l1-liikenne-khk-paastot.px',
     'px_topic': 'Ympäristötilastot/02_Energia/3_Energiaperainen_kuormitus/L1_Liikenne_KHK_paastot.px',
     'indicator_id': 67,
+    'query': 'Alue == "Helsinki" & Muuttuja == "Kokonaispäästöt (1000t CO2-ekv.)"',
     'lambda_over': 'Ajoneuvoluokka',
     'lambda': lambda x: x["Lähijunat"] + x["Metrot"] + x["Raitiovaunut"],
-    'query': 'Alue == "Helsinki" & Muuttuja == "Kokonaispäästöt (1000t CO2-ekv.)"',
 }, {
     'name': 'Tieliikenteen kasvihuonekaasupäästöt (HSY)',
     'px_file': 'data/aluesarjat_px/ymparistotilastot/02-energia/3-energiaperainen-kuormitus/l1-liikenne-khk-paastot.px',
@@ -360,8 +377,8 @@ INDICATORS = [{
     'indicator_id': 151,
     'query': 'Alue == "Helsinki" & Muuttuja == "Kokonaispäästöt (1000t CO2-ekv.)"',
     'lambda_over': 'Ajoneuvoluokka',
-    # Fixme: laivat mukana?
-    'lambda': lambda x: x["Linja-autot"] + x["Lähijunat"] + x["Metrot"] + x["Raitiovaunut"] + x["Matkustajalaivat"],
+    # FIXME: --> Laivat otettiin pois
+    'lambda': lambda x: x["Linja-autot"] + x["Lähijunat"] + x["Metrot"] + x["Raitiovaunut"],
 }]
 
 
@@ -370,6 +387,15 @@ result = client.execute(GET_PLAN_INDICATORS, variable_values=dict(plan='hnh2035'
 indicators = result['planIndicators']
 indicators_by_name = {x['name']: x for x in result['planIndicators']}
 indicators_by_id = {int(x['id']): x for x in result['planIndicators']}
+
+
+topic_latest_years = {}
+
+
+def post_indicator_values(ind, s):
+    pprint(ind)
+    s.index = s.index.map(lambda x: str(x) + '-12-31')
+    post_values(ind['id'], s)
 
 
 def update_indicator(ind):
@@ -384,8 +410,8 @@ def update_indicator(ind):
     df = pxf.to_df(melt=True)
 
     iobj = indicators_by_id[ind['indicator_id']]
-    pprint(iobj)
-    print(df.tail())
+    # pprint(iobj)
+    # print(df.tail())
     YEAR_COLS = ['vuosi', 'Vuosi']
     for col_name in df.columns:
         if col_name == 'value' or col_name in YEAR_COLS:
@@ -400,30 +426,50 @@ def update_indicator(ind):
     else:
         raise Exception('Year col not found')
 
-    if 'query' in ind:
-        df = df.query(ind['query'])
-        if 'sum_over' in ind:
-            df = df.drop(columns=ind['sum_over'])
-            df = df.reset_index()
-            cols = df.columns[:-1].values
-            df = df.groupby(col, as_index=False)['value'].sum()
-            df = df.set_index(cols[0])
-        elif 'lambda_over' in ind:
-            df = df.reset_index()
-            df = df.set_index([list(df.columns)[0], ind['lambda_over']])
-            for col in df.columns:
-                if col == 'value':
-                    continue
-                if len(df[col].unique()) != 1:
-                    raise Exception()
-            df = df['value'].unstack(ind['lambda_over'])
-            df = pd.DataFrame(dict(value=[ind['lambda'](x) for x in df.to_dict('records')]), index=df.index)
-
-        s = df['value']
-        assert s.index.is_unique
-        print(s)
-    else:
+    if 'query' not in ind:
+        pprint(iobj)
+        print(df)
         input()
+        print('\n')
+        return
+
+    df = df.query(ind['query'])
+    if 'sum_over' in ind:
+        df = df.drop(columns=ind['sum_over'])
+        df = df.reset_index()
+        cols = df.columns[:-1].values
+        df = df.groupby(col, as_index=False)['value'].sum()
+        df = df.set_index(cols[0])
+    elif 'lambda_over' in ind:
+        df = df.reset_index()
+        df = df.set_index([list(df.columns)[0], ind['lambda_over']])
+        for col in df.columns:
+            if col == 'value':
+                continue
+            if len(df[col].unique()) != 1:
+                raise Exception()
+        df = df['value'].unstack(ind['lambda_over'])
+        df = pd.DataFrame(dict(value=[ind['lambda'](x) for x in df.to_dict('records')]), index=df.index)
+
+    s = df['value']
+    assert s.index.is_unique
+    s.index = s.index.astype(int)
+
+    if ind.get('map'):
+        s = s.map(ind['map'])
+
+    s = s.loc[s != '..']
+
+    latest_year = topic_latest_years.get(ind['px_topic'])
+    series_newest = s.index.astype(int).max()
+    if not latest_year or series_newest > latest_year:
+        topic_latest_years[ind['px_topic']] = series_newest
+
+    lv = iobj['latestValue']
+    api_latest_year = int(lv['date'].split('-')[0]) if lv else None
+    if not api_latest_year or series_newest > api_latest_year:
+        post_indicator_values(iobj, s)
+
     print('\n')
 
 
@@ -471,7 +517,24 @@ def generate_indicator_table():
 if __name__ == '__main__':
     # generate_indicator_table()
     # exit()
+    ok = 0
+
+    matched = True
+    # START_FROM = 'Helsingin rakennusala'
+    START_FROM = None
+
     for ind in INDICATORS:
+        if not matched:
+            if ind['name'] == START_FROM:
+                matched = True
+            else:
+                continue
         if ind.get('skip'):
             continue
         update_indicator(ind)
+        ok += 1
+
+    for key in sorted(topic_latest_years.keys()):
+        print('%d: %s' % (topic_latest_years[key], key))
+
+    print('OK: %d, total: %d' % (ok, len(INDICATORS)))

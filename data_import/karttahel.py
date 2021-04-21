@@ -1,6 +1,7 @@
 import io
 import geopandas as gpd
 import pandas as pd
+import numpy as np
 from owslib.wfs import WebFeatureService
 
 
@@ -13,7 +14,7 @@ def read_wfs_layer():
     bio = io.BytesIO(s)
 
     df = gpd.read_file(bio)
-    df = df.drop(columns='geometry')
+    # df = df.drop(columns='geometry')
     # df['geometry'] = df.geometry.astype(str)
     return df
 
@@ -162,10 +163,10 @@ BUILDING_CODES = {
 }
 
 BUILDING_CODE_COLS = {
-    'tila_koodi': 'olotila',
-    'ratu_vastaavuus_koodi': 'vastaavuus',
-    'ratu_laatu_koodi': 'laatu',
-    'tyyppi_koodi': 'tyyppi',
+    # 'tila_koodi': 'olotila',
+    #'ratu_vastaavuus_koodi': 'vastaavuus',
+    #'ratu_laatu_koodi': 'laatu',
+    #'tyyppi_koodi': 'tyyppi',
     'c_rakeaine': 'ra_kantrakaine',
     'c_poltaine': 'ra_lammonlahde',
     'c_lammtapa': 'ra_lammitystapa',
@@ -203,24 +204,25 @@ COLUMN_MAPS = {
 }
 
 
-def get_buildings():
-    df = pd.read_parquet('buildings.pq')
+def fix_buildings(df):
+    df = df.copy()
     for col, type_name in BUILDING_CODE_COLS.items():
-        df[col] = df[col].astype('Int64').astype(str).map(BUILDING_CODES[str(type_name)])
+        print(col, type_name)
+        df[col] = df[col].replace({None: np.nan}).astype('Int64').astype(str).map(BUILDING_CODES[str(type_name)])
+
         df[col] = df[col].astype('category')
 
-    for col in ('c_hissi', 'c_viemlii'):
+    for col in ('c_hissi', 'c_viemlii', 'c_sahkolii', 'c_vesilii'):
         df[col] = df[col].astype(bool)
 
     dt = df['c_valmpvm']
     df.loc[dt > '2030', 'c_valmpvm'] = None
     df.loc[dt < '1700', 'c_valmpvm'] = None
-    df['c_valmpvm'] = pd.to_datetime(df['c_valmpvm']).dt.tz_convert('Europe/Helsinki')
-    df = df.drop(columns='gml_id')
+    df['c_valmpvm'] = pd.to_datetime(df['c_valmpvm']).dt.tz_localize('Europe/Helsinki')
 
     df = df.drop(columns=[key for key, val in COLUMN_MAPS.items() if val is None])
 
-    df['Postinumero'] = df['postinumero'].map('00{:,.0f}'.format, na_action='ignore')
+    df['Postinumero'] = df['postinumero'] # .map('00{:,.0f}'.format, na_action='ignore')
     df = df.drop(columns=['postinumero', 'katunimi_ruotsi'])
     df['Osoite'] = df['katunimi_suomi'] + ' ' + df['osoitenumero']
     df = df.drop(columns=['katunimi_suomi', 'osoitenumero'])

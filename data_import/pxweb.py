@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
+
 import requests_cache
 from pandas_pcaxis import PxParser
 from pandas_pcaxis.pxweb_api import PXWebAPI
@@ -30,10 +31,11 @@ class PXDownloader:
             file_updated = datetime.fromtimestamp(os.path.getmtime(file_path))
             if topic['updated'] - file_updated < timedelta(days=1):
                 # FIXME
-                # return
-                pass
+                return
         except FileNotFoundError:
             pass
+
+        print(topic_path)
 
         dirname = os.path.dirname(file_path)
         if not os.path.exists(dirname):
@@ -84,6 +86,10 @@ class PXDownloader:
 if __name__ == '__main__':
     api = PXWebAPI('http://api.aluesarjat.fi', 'fi')
     downloader = PXDownloader(api, 'data/aluesarjat_px')
-    downloader.download_databases(only_db='Ympäristötilastot')
-    with open('data/aluesarjat_px/ymparistotilastot.json', 'w', encoding='utf8') as outf:
+    #downloader.download_databases(only_db='Ympäristötilastot')
+    #with open('data/aluesarjat_px/ymparistotilastot.json', 'w', encoding='utf8') as outf:
+    #    json.dump(downloader.tables, outf, ensure_ascii=False, indent=4)
+
+    downloader.download_databases(only_db='Helsingin seudun tilastot')
+    with open('data/aluesarjat_px/aluesarjat.json', 'w', encoding='utf8') as outf:
         json.dump(downloader.tables, outf, ensure_ascii=False, indent=4)
