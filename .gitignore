@@ -4,3 +4,7 @@ __pycache__/
 /cache.sqlite
 /.env
 /data/
+.Rproj.user
+venv/
+src/
+ghg-notebooks.Rproj
