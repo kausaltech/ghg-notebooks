@@ -1,17 +1,18 @@
 import math
 import re
+from io import BytesIO
 
+import openpyxl
 import requests
-import xlrd
 import pandas as pd
 import numpy as np
-import requests_cache
+from utils.dvc import update_dataset
 
 
-def _load_xlsx_url(url):
+def _load_xlsx_url(url) -> openpyxl.Workbook:
     resp = requests.get(url)
     resp.raise_for_status()
-    return xlrd.open_workbook(file_contents=resp.content)
+    return openpyxl.load_workbook(BytesIO(resp.content))
 
 
 EURO_CLASS_YEARS = {
@@ -139,12 +140,12 @@ def get_mileage_per_engine_type():
     df = pd.read_excel(url, skiprows=4, header=0, index_col=0, usecols="A:I")
 
     # Make sure we have parsed the .xlsx correctly
-    assert df.index.name == 2018
+    assert df.index.name == 2019
     df.index.name = 'Vehicle'
 
     # Remove useless rows from dataset
     df.dropna(axis=0, inplace=True, how='all')
-    df.drop(['Yhteensä', 2018], inplace=True)
+    df.drop(['Yhteensä', 2019], inplace=True)
     # Make sure the keys we're interested in are in the data
     assert 'HA bensiini' in df.index
     assert 'HA diesel' in df.index
@@ -180,6 +181,8 @@ def _parse_gas_section(sections, rows):
 
     for row in rows[1:]:
         index_name = row[0].value
+        if index_name is None:
+            continue
         if not isinstance(index_name, str):
             index_name = str(int(index_name))
         if not index_name:
@@ -220,10 +223,9 @@ def _parse_gas_section(sections, rows):
     return index_tuples, data
 
 
-def _parse_unit_emission_excel(book):
-    sheet = book.sheets()[0]
-
-    rows = list(sheet.get_rows())
+def _parse_unit_emission_excel(book: openpyxl.Workbook):
+    sheet = book.worksheets[0]
+    rows = list(sheet.rows)
     section_row = rows[5]
     sections = [(col_idx, label.value) for col_idx, label in enumerate(section_row) if label.value]
 
@@ -289,7 +291,9 @@ def get_car_unit_emissions():
     df_list = []
     key_list = []
     for fname, engine_type in PASSENGER_EMISSIONS:
-        book = _load_xlsx_url('http://lipasto.vtt.fi/yksikkopaastot/henkiloliikennee/tieliikennee/henkiloautote/%s.xlsx' % fname)
+        url = 'http://lipasto.vtt.fi/yksikkopaastot/henkiloliikennee/tieliikennee/henkiloautote/%s.xlsx' % fname
+        print(url)
+        book = _load_xlsx_url(url)
         df = _parse_unit_emission_excel(book)
         df_list.append(df)
         key_list.append(engine_type)
@@ -312,7 +316,7 @@ def get_car_unit_emissions():
 def get_all_liisa_data():
     dfs = []
 
-    for year in (2012, 2013, 2014, 2015, 2016, 2017, 2018):
+    for year in (2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019):
         print(year)
         df = get_liisa_muni_data(year).reset_index()
         df['Year'] = year
@@ -323,20 +327,14 @@ def get_all_liisa_data():
 
 
 if __name__ == '__main__':
-    import quilt
+    import requests_cache
+    requests_cache.install_cache('lipasto')
 
-    USER = 'jyrjola'
-    PACKAGE_BASE = 'lipasto'
-
-    def build_and_push(package, df):
-        quilt.build('%s/%s/%s' % (USER, PACKAGE_BASE, package), df)
-        quilt.push('%s/%s/%s' % (USER, PACKAGE_BASE, package), is_public=True)
-
-    #df = get_car_unit_emissions().reset_index()
-    #build_and_push('car_unit_emissions', df)
+    df = get_car_unit_emissions().reset_index()
+    update_dataset('vtt/lipasto/car_unit_emissions', df)
 
     df = get_all_liisa_data()
-    build_and_push('emissions_by_municipality', df)
+    update_dataset('vtt/lipasto/emissions_by_municipality', df)
 
-    #df = get_mileage_per_engine_type().reset_index()
-    #build_and_push('mileage_per_engine_type', df)
+    df = get_mileage_per_engine_type().reset_index()
+    update_dataset('vtt/lipasto/mileage_per_engine_type', df)

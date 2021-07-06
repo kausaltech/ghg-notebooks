@@ -16,8 +16,11 @@ logger.setLevel(logging.INFO)
 logger.handlers = logging.getLogger('luigi-interface').handlers
 
 
-if not settings.FINGRID_API_KEY:
-    raise Exception("FINGRID_API_KEY not specified in settings")
+if not settings.NUUKA_API_BASE_URL:
+    raise Exception("NUUKA_API_BASE_URL not specified in settings")
+
+if not settings.NUUKA_API_KEY:
+    raise Exception("NUUKA_API_KEY not specified in settings")
 
 
 class FingridDBTarget(TimescaleDBTarget):
@@ -140,7 +143,7 @@ class FingridMonthlyAllMeasurementsTask(luigi.Task):
 
 
 class FingridUpdateQuiltTask(luigi.Task):
-    measurement_type = luigi.ChoiceParameter(choices=['power', 'temperature'])
+    measurement_type = luigi.ChoiceParameter(choices=['power', 'temperature', 'price'])
     no_push = luigi.BoolParameter()
 
     quilt_package_name = 'fingrid_realtime'
@@ -154,15 +157,19 @@ class FingridUpdateQuiltTask(luigi.Task):
         self.measurements = [(n, m) for n, m in fingrid.MEASUREMENTS.items() if self.include_measurement(m)]
 
     def include_measurement(self, m):
-        return m['interval'] == fingrid.THREE_MIN and m['quantity'] == self.measurement_type
+        if self.measurement_type == 'price':
+            interval = fingrid.HOURLY
+        else:
+            interval = fingrid.THREE_MIN
+        return m['interval'] == interval and m['quantity'] == self.measurement_type
 
     def requires(self):
         return [FingridMonthlyTask(month=self.last_month, measurement_name=name) for name, m in self.measurements]
 
     def output(self):
         inputs = self.requires()
-        latest_rows = (t.output().get_latest_row(before=self.end_time) for t in inputs)
-        latest_ts = max((r['time'] for r in latest_rows))
+        latest_rows = [t.output().get_latest_row(before=self.end_time) for t in inputs]
+        latest_ts = max((r['time'] for r in latest_rows)) if latest_rows else None
         target = QuiltDataframeTarget(self.quilt_package_name, self.measurement_type, timestamp=latest_ts)
         return target
 
@@ -184,7 +191,8 @@ class FingridUpdateQuiltTask(luigi.Task):
             logger.info('Read %d rows' % len(df))
             col_name = df.columns[0]
             assert col_name == m['quantity']
-            df[col_name] = df[col_name].astype('pint[%s]' % m['unit'])
+            if m['unit'] != 'EUR/MWh':
+                df[col_name] = df[col_name].astype('pint[%s]' % m['unit'])
             name = task.measurement_name.replace('_3m', '').replace('_hourly', '')
             df.rename(columns={col_name: name}, inplace=True)
             frames.append(df)
