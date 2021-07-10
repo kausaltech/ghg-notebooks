@@ -4,13 +4,13 @@ library(gsheet)
 objects.latest("Op_en7783",code_name="ontology") # [[Open policy ontology]]
 objects.latest("Op_en3861", code_name="makeGraph") # [[Insight network]]
 
-make_one_object_per_line <- function(df, object_list) {
+make_one_entry_per_line <- function(df, col, object_list) {
   out <- data.frame()
   for(i in object_list) {
-    tmp <- df[grep(i, df$Object),]
-    tmp$Object <- i
+    tmp <- df[grep(i, df[[col]]),]
+    tmp[[col]] <- i
     out <- rbind(out, tmp)
-    df$Object <- gsub(i, "", df$Object)
+    df[[col]] <- gsub(i, "", df[[col]])
   }
   return(out)
 }
@@ -102,16 +102,18 @@ df$type <- ifelse(df$Tyyppi == "Taktinen mittari", "toiminnallinen mittari","vai
 gr <- makeGraph(df)
 render_graph(gr, title="Tampere indicators with own classification")
 
-if(FALSE) {
-  df$Object2 <- df$Object
-  df$Object <- df$SDG
-  TRE_TYPES <- c("15.1.1", "15.2.1", "7.1.2", "7.2.1", "7.3.1", "12.2.1", "12.2.2")
-  df <- make_one_object_per_line(df, TRE_TYPES)
-  df$Object <- paste("SDG", df$Object)
-  gr <- makeGraph(df)
-  render_graph(gr, title = "Tampere indicators with SDG connections")
-  export_graph(gr, "Tampere indicators with SDG connections.png")
-}
+df$Object2 <- df$Object
+df$Object <- df$SDG
+TRE_TYPES <- c("15.1.1", "15.2.1", "7.1.2", "7.2.1", "7.3.1", "12.2.1", "12.2.2")
+df <- make_one_entry_per_line(df, "Object", TRE_TYPES)
+#  df$Object <- paste("SDG", df$Object)
+
+gr <- makeGraph(df)
+render_graph(gr, title = "Tampere indicators with SDG connections")
+#  export_graph(gr, "Tampere indicators with SDG connections.png")
+
+df_tampere_sdg <- df[df$Object!="-",]
+df_tampere_sdg$type <- "decision"
 
 ############################################3
 # HELSINKI
@@ -165,7 +167,7 @@ HKI_TYPES <- c(
   "Energiarenessanssi"
 )
 
-gr <- makeGraph(make_one_object_per_line(df, HKI_TYPES))
+gr <- makeGraph(make_one_entry_per_line(df, "Object", HKI_TYPES))
 render_graph(gr, "Helsinki indicators with own classification")
 
 #########################################3
@@ -186,6 +188,206 @@ df$Context <- "SDG"
 
 gr <- makeGraph(df)
 render_graph(gr, title = "UN Sustainable Development Goals (SDG)")
+
+gr <- makeGraph(orbind(df_tampere_sdg, df))
+render_graph(gr, title="Tampere indicators among SDG")
+
+###########################################3
+# LAHTI
+
+LAHTI_TYPES <- c(
+  "Kestävä talous",
+  "Sopeutuminen",
+  "Kestävä kaupunkisuunnittelu",
+  "Vedet ja vesistöt",
+  "Kiertotalous",
+  "Osallistuminen",
+  "Liikenne",
+  "Hillintä",
+  "Ilmanlaatu",
+  "Luonnon monimuotoisuus",
+  "Melu"
+)
+
+df <- gsheet2tbl("https://docs.google.com/spreadsheets/d/14IqbQO466LiZW84VnLgvLRx29DnI2bjnGTu2T6M8aZ0/edit#gid=308152450")
+df$Object <- df$Teemat
+df <- make_one_entry_per_line(df, "Object", LAHTI_TYPES)
+df$Item <- df$Nimi
+df$label <- df$Nimi
+df$Context <- "Lahti"
+df$rel <- "instance of"
+df$type <- ifelse(df$Tyyppi=="Strateginen mittari","strategic indicator",
+                  ifelse(df$Tyyppi=="Taktinen mittari","tactical indicator","operational indicator"))
+
+gr <- makeGraph(df)
+render_graph(gr, title = "Lahti indicators")
+
+###########################################3
+# Newcastle
+
+NEWCASTLE_ORGS <- c(
+  "all city residents, young people",
+  "Bus operators",
+  "business forums", # redundant 3-->11
+  "Citizen Assembly", # redundant 4-->5
+  "Citizen's Assembly",
+  "City and regional transport organisations",
+  "city centre businesses and other organisations", # redundant 7-->11
+  "city partners",
+  "city-wide businesses", # redundant 9-->11
+  "city-wide businesses and employers", # redundant 10-->11
+  "businesses",
+  "Climate Change Adaptation Working Group",
+  "E.ON",
+  "employers and business forums", # redundant 14-->11
+  "Environment Agency",
+  "freight companies",
+  "Gateshead Council",
+  "Government / Office of National Statistics",
+  "Groundwork",
+  "Invest Newcastle",
+  "local businesses", # redundant 21-->11
+  "local schools",
+  "local training and skills providers",
+  "NE1",
+  "Newcastle City Concil", # redundant 25-->26
+  "Newcastle City Council",
+  "Newcastle College Group",
+  "Newcastle Gateshead Initiative",
+  "Newcastle International Airport",
+  "Newcastle University",
+  "Newcastle upon Tyne Hospitals NHS Foundation Trust",
+  "Nexus",
+  "North East Combined Authority",
+  "North East Local Enterprise Partnership",
+  "North of Tyne Combined Authority",
+  "Northern Gas Network",
+  "Northern Powergrid",
+  "Northumbria University",
+  "Northumbrian Water",
+  "Ofgem",
+  "local authorities",
+  "other public sector bodies", # redundant 42-->41
+  "other relevant interested stakeholders",
+  "other research bodies",
+  "partner authorities in Gateshead, North Tyneside, Northumberland and Sunderland",
+  "partner organisations for pilot project",
+  "Regenerate Newcastle Partnership",
+  "together with neighbouring local authorities", #redundant 48-->41
+  "trade unions",
+  "Transport for the North, National Rail, local maritime sector",
+  "transport operators",
+  "Tyne and Wear Pensions Fund",
+  "Urban Green",
+  "Your Homes Newcastle and other housing associations"
+)
+
+df <- gsheet2tbl("https://docs.google.com/spreadsheets/d/14IqbQO466LiZW84VnLgvLRx29DnI2bjnGTu2T6M8aZ0/edit#gid=31511668")
+df <- make_one_entry_per_line(df, "Responsible parties", NEWCASTLE_ORGS)
+
+df$`Responsible parties` <- ifelse(
+  df$`Responsible parties` %in% NEWCASTLE_ORGS[c(3,7,9,10,21)],
+  df$`Responsible parties`[11], df$`Responsible parties`)
+df$`Responsible parties` <- ifelse(
+  df$`Responsible parties` %in% NEWCASTLE_ORGS[c(4)],
+  df$`Responsible parties`[5], df$`Responsible parties`)
+df$`Responsible parties` <- ifelse(
+  df$`Responsible parties` %in% NEWCASTLE_ORGS[c(25)],
+  df$`Responsible parties`[26], df$`Responsible parties`)
+df$`Responsible parties` <- ifelse(
+  df$`Responsible parties` %in% NEWCASTLE_ORGS[c(42,48)],
+  df$`Responsible parties`[41], df$`Responsible parties`)
+
+df$Item <- df$ID
+df$Object <- df$`Responsible parties`
+df$label <- df$ID
+df$Description <- substr(df$Action,1,30)
+df$Context <- "Newcastle"
+df$rel <- "responsibility of"
+df$type <- ifelse(grepl("&S",df$ID),"strategic indicator",
+                  ifelse(grepl("T",df$ID),"tactical indicator",
+                               ifelse(grepl("E",df$ID),"operational indicator","risk factor")))
+
+gr <- makeGraph(df)
+render_graph(gr, title = "Newcastle action responsibilities are really focussed around Newcastle City Council")
+
+gr <- makeGraph(df[df$`Responsible parties`!="Newcastle City Council",])
+render_graph(gr, title="Newcastle action responsibilities without the City Council")
+
+#######################################
+# Umeå
+
+#df <- gsheet2tbl("https://docs.google.com/spreadsheets/d/14IqbQO466LiZW84VnLgvLRx29DnI2bjnGTu2T6M8aZ0/edit#gid=815059680")
+
+txt <- readLines("~/Umeå.txt")
+txt <- trimws(txt)
+txt <- txt[txt!=""]
+BLOCK_BREAKS <- grep("###",txt)
+sort(txt[BLOCK_BREAKS+1])
+
+n <- function(x) {
+  if(length(x)==0) x <- NA
+  return(x)
+}
+out <- data.frame()
+for(i in 1:(length(BLOCK_BREAKS)-1)) {
+  tmp <- txt[BLOCK_BREAKS[i]:BLOCK_BREAKS[i+1]]
+#  print(tmp)
+  NAME <- tmp[2]
+  DESCRIPTION <- paste(tmp[3:(match("info_outline", tmp)-1)],collapse="\n")
+  TYPE <- tmp[grep("filter_none",tmp)+1]
+  STATUS <- tmp[grep("STATUS",tmp)+1]
+  ANSVARIG_ORGANISATION <- tmp[grep("ANSVARIG ORGANISATION",tmp)+1]
+  KOPPLAD_TILL <- tmp[(grep("KOPPLAD TILL:",tmp)+1):(length(tmp)-1)]
+  IMPLEMENTERAS <- tmp[grep("IMPLEMENTERAS",tmp)+1]
+  REFERENSER <- tmp[grep("REFERENSER",tmp)+1]
+  out <- rbind(out,data.frame(
+    Name = n(NAME),
+    Description = n(DESCRIPTION),
+    Type = n(TYPE),
+    Status = n(STATUS),
+    Responsible = n(ANSVARIG_ORGANISATION),
+    Targets = n(KOPPLAD_TILL),
+    Implementation = n(IMPLEMENTERAS),
+    References = n(REFERENSER)
+  ))
+}
+umeå_actions <- out
+
+##############################
+# Umeå categories
+
+txt <- readLines("~/Umeå2.txt")
+txt <- trimws(txt)
+txt <- txt[txt!=""]
+BLOCK_BREAKS <- grep("###",txt)
+i <- 1
+out <- data.frame()
+for(i in 1:(length(BLOCK_BREAKS)-1)) {
+  tmp <- txt[BLOCK_BREAKS[i]:BLOCK_BREAKS[i+1]]
+  NAME <- tmp[2]
+  CATEGORY1 <- tmp[16]
+  CATEGORY2 <- tmp[17]
+  CATEGORY3 <- tmp[18]
+  if(CATEGORY1 %in% c("Avfall","Industri","Jordbruk","Övrigt (Arbetsmaskiner, produkter mm)")) CATEGORY3 <- NA
+  MAL <- grep("Mål 2030",tmp)
+  if(NAME=="---") {
+    NAME <- tmp[MAL-1]
+    if(grepl("%",NAME)) NAME <- tmp[MAL-2]
+  }
+  MALDESC <- tmp[MAL+1]
+  DESC <- tmp[(MAL+2):(grep("Genomförda åtgärder",tmp)-1)]
+  DESC <- paste(DESC[!DESC %in% c(NAME, "Mer information")], collapse="\n")
+
+  out <- rbind(out, data.frame(
+    Name = NAME,
+    Category1 = CATEGORY1,
+    Category2 = CATEGORY2,
+    Category3 = CATEGORY3,
+    Goal = MALDESC,
+    Description = DESC
+  ))
+}
 
 if(FALSE) {
 ontology <- EvalOutput(ontology)
