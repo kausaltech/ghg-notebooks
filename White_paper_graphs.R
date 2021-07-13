@@ -320,11 +320,56 @@ gr <- makeGraph(df[df$`Responsible parties`!="Newcastle City Council",])
 render_graph(gr, title="Newcastle action responsibilities without the City Council")
 
 #######################################
-# Umeå
+
+# Umeå action categories
+
+c(
+  "Biobränslen",
+  "Biodrivmedel för arbesmaskiner",
+  c("Biodrivmedel för tunga lastbilar","Biobränsle för tung godstrafik"),
+  "Byte till fjärrvärme i kommersiella lokaler",
+  "Byte till fjärrvärme i småhus",
+  c("Digitala möten","Digitala amöten"),
+  "Effektivare användning av boyta",
+  "Effektivisering",
+  "Elektricitet",
+  "Elektrifiering av lätta lastbilar",
+  "Elektrifiering av tunga lastbilar",
+  c("Energieffektivare lätta lastbilar","Eco-driving av lätta lastbilar"),
+  c("Energieffektivare tunga lastbilar","Eco-driving av tunga lastbilar"),
+  "Energieffektivisering av lokaler",
+  c("Energieffektivisering i existerande småhus","Effektivare användning av bostadsyta"),
+  "Energiåtervinning genom avfallsförbränning",
+  "Från betong/stål till trästomme i flerbostadshus",
+  "Förbättrad elproduktion",
+  "Minskad produktion av avfall",
+  "Miskat resande",
+  c("Nytt Omställningsmål","Nytt Omställningmål","Nytt omställningsmål","Nytt Omställiningsmål"),
+  "Solceller på tak",
+  "Sparsam körning med lätta lastbilar",
+  "Sparsam körning med tunga lastbilar",
+  "Tåg",
+  "Ökad andel kollektivtrafik med elbuss",
+  "Överflyttning av fraktat gods till järnväg",
+  "Överflyttning av fraktat gods till sjöfart",
+  "Överflyttning till distansarbete"                
+)
+> setdiff(tst, categories)
+[1]                                        
+[3]                                  
+[5] "Effektivare körning av godstrafik"                 "Elektrifiering av lätt godstrafik"                
+[7] "Elektrifiering tunga lastbilar"                    "Energieffektivare fordonsteknik (lätta lastbilar)"
+[9] "Energieffektivare fordonsteknik (tunga lastbilar)" "Energieffektivisering i existerande bostäder"     
+[11] "Energieffektivisering i lokaler"                   "Increased energy recovery from waste"             
+[13] "Reduced production of waste"                       "Solpaneler på tak"                                
+[15] "Ökad andel distansarbete"                          "Ökad andel kollektivtrafik"                       
+[17] "Överflyttning till sjöfart"                       
+
+# Umeå action descriptions
 
 #df <- gsheet2tbl("https://docs.google.com/spreadsheets/d/14IqbQO466LiZW84VnLgvLRx29DnI2bjnGTu2T6M8aZ0/edit#gid=815059680")
 
-txt <- readLines("~/Umeå.txt")
+txt <- readLines("Umeå_action_descriptions.txt")
 txt <- trimws(txt)
 txt <- txt[txt!=""]
 BLOCK_BREAKS <- grep("###",txt)
@@ -380,14 +425,20 @@ out <- make_one_entry_per_line(out,"Object",UMEA_ORGANISATIONS)
 gr <- makeGraph(out[!duplicated(out[c("Item","Object")]),])
 render_graph(gr, title = "Umeå Responsible Organisations")
 
+tst <- sort(unique(out$Targets))
+
 gr <- makeGraph(out[!duplicated(out[c("Item","Object")]) & out$Object!="Umeå kommun",])
 render_graph(gr, title = "Umeå Responsible Organisations w/o Umeå kommun")
 
+out$Object <- out$Targets
+out$rel <- "has objective"
+gr <- makeGraph(out[!duplicated(out[c("Item","Object")]),])
+render_graph(gr, title = "Omeå objectives. Some objectives have really many actions - difficult to monitor")
 
 ##############################
 # Umeå categories
 
-txt <- readLines("~/Umeå2.txt")
+txt <- readLines("Umeå_action_categories.txt")
 txt <- trimws(txt)
 txt <- txt[txt!=""]
 BLOCK_BREAKS <- grep("###",txt)
