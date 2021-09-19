@@ -1,4 +1,4 @@
-"exposure_agent","response","exposure","er_function","scaling","exposure_unit","observation","source","result","age","hepatitis"
+"exposure_agent","response","exposure","er_function","scaling","exposure_unit","observation","source","Result","age","hepatitis"
 "Indoor radon","Lung cancer morbidity","Annual average indoor air concentration","RR","None","Bq /m3","Threshold","ERF_envData",0,NA,NA
 "Indoor radon","Lung cancer morbidity","Annual average indoor air concentration","RR","None","Bq /m3","ERF","ERF_envData",1.0016,NA,NA
 "PM2.5","Lung cancer mortality","Annual average outdoor air concentration","RR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
