@@ -1,129 +1,129 @@
-"exposure_agent","response","exposure","er_function","scaling","exposure_unit","observation","source","Result","age","hepatitis"
-"Indoor radon","Lung cancer morbidity","Annual average indoor air concentration","RR","None","Bq /m3","Threshold","ERF_envData",0,NA,NA
-"Indoor radon","Lung cancer morbidity","Annual average indoor air concentration","RR","None","Bq /m3","ERF","ERF_envData",1.0016,NA,NA
-"PM2.5","Lung cancer mortality","Annual average outdoor air concentration","RR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
-"PM2.5","Lung cancer mortality","Annual average outdoor air concentration","RR","None","µg /m3","ERF","ERF_envData",1.014,NA,NA
-"PM2.5","Cardiopulmonary mortality","Annual average outdoor concentration","RR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
-"PM2.5","Cardiopulmonary mortality","Annual average outdoor concentration","RR","None","µg /m3","ERF","ERF_envData",1.009,NA,NA
-"PM2.5","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
-"PM2.5","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","ERF","ERF_envData",1.0062,NA,NA
-"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","Threshold","ERF_envData",0,NA,NA
-"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","ERF","ERF_envData",1.0039,NA,NA
-"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","netrev /l","Threshold","ERF_envData",0,NA,NA
-"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","netrev /l","ERF","ERF_envData",1.000029,NA,NA
-"Arsenic","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","Threshold","ERF_envData",0,NA,NA
-"Arsenic","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","ERF","ERF_envData",1.002,NA,NA
-"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","Threshold","ERF_envData",0,"<14",NA
-"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","ERF","ERF_envData",1.0140743178,"<14",NA
-"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","Threshold","ERF_envData",0,">=14",NA
-"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","ERF","ERF_envData",1,">=14",NA
-"Dampness damage","Asthma morbidity","Yes/no moisture damage","RR","None","%","Threshold","ERF_envData",0,NA,NA
-"Dampness damage","Asthma morbidity","Yes/no moisture damage","RR","None","%","ERF","ERF_envData",1.37,NA,NA
-"Dampness damage","Lower respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","Threshold","ERF_envData",0,NA,NA
-"Dampness damage","Lower respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","ERF","ERF_envData",1.5,NA,NA
-"Dampness damage","Upper respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","Threshold","ERF_envData",0,NA,NA
-"Dampness damage","Upper respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","ERF","ERF_envData",1.7,NA,NA
-"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","Threshold","ERF_envData",0,"<14",NA
-"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","ERF","ERF_envData",0.125,"<14",NA
-"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","Threshold","ERF_envData",0,">=14",NA
-"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","ERF","ERF_envData",0,">=14",NA
-"Outdoor ozone","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
-"Outdoor ozone","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","ERF","ERF_envData",1.000299596,NA,NA
-"Lead","Decrease of IQ below 70 points","Intake level from food","UR","None"," ?","Threshold","ERF_envData",0,NA,NA
-"Lead","Decrease of IQ below 70 points","Intake level from food","UR","None"," ?","ERF","ERF_envData",0.025,NA,NA
-"Lead","Increased blood pressure","Intake level from food","UR","None","? ","Threshold","ERF_envData",0,NA,NA
-"Lead","Increased blood pressure","Intake level from food","UR","None","? ","ERF","ERF_envData",0.025,NA,NA
-"Lead","IQ loss","Blood concentration","UR","None","IQ l /ug","Threshold","ERF_envData",24,"Age 1",NA
-"Lead","IQ loss","Blood concentration","UR","None","IQ l /ug","ERF","ERF_envData",0.039,"Age 1",NA
-"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","Threshold","ERF_envData",0,NA,"Hepatitis B-"
-"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","ERF","ERF_envData",0.01,NA,"Hepatitis B-"
-"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","Threshold","ERF_envData",0,NA,"Hepatitis B+"
-"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","ERF","ERF_envData",0.3,NA,"Hepatitis B+"
-"Formaldehyde","Nasal cancer morbidity","Annual average indoor concentration","UR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
-"Formaldehyde","Nasal cancer morbidity","Annual average indoor concentration","UR","None","µg /m3","ERF","ERF_envData",1.3e-05,NA,NA
-"Benzene","Leukemia morbidity","Annual average indoor concentration","UR","None"," µg /m3","Threshold","ERF_envData",0,NA,NA
-"Benzene","Leukemia morbidity","Annual average indoor concentration","UR","None"," µg /m3","ERF","ERF_envData",5e-06,NA,NA
-"Quatzdust","Silicosis morbidity","Indoor air concentration","UR","None","mg /m3","Threshold","ERF_envData",0,NA,NA
-"Quatzdust","Silicosis morbidity","Indoor air concentration","UR","None","mg /m3","ERF","ERF_envData",0.166666666666667,NA,NA
-"Asbestos at work","Lung cancer and mesothelioma morbidity","Indoor air concentration","UR","None"," ","Threshold","ERF_envData",0,NA,NA
-"Asbestos at work","Lung cancer and mesothelioma morbidity","Indoor air concentration","UR","None"," ","ERF","ERF_envData",0.05,NA,NA
-"Noise at work","Hearing damage","Noise level","UR","None"," ","Threshold","ERF_envData",0,NA,NA
-"Noise at work","Hearing damage","Noise level","UR","None"," ","ERF","ERF_envData",570,NA,NA
-"Noise at work","Hearing damage","Noise level","UR","None"," ","Threshold","ERF_envData",0,NA,NA
-"Noise at work","Hearing damage","Noise level","UR","None"," ","ERF","ERF_envData",1320,NA,NA
-"Outdoor ozone","Mild decreasing on general functioning","Annual average outdoor air concentration","UR","None","µg /m3","Threshold","ERF_envData",0,NA,NA
-"Outdoor ozone","Mild decreasing on general functioning","Annual average outdoor air concentration","UR","None","µg /m3","ERF","ERF_envData",0.115,NA,NA
-"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","BW","mg /kg bw /day","Threshold","ERF_omega3Data",0,NA,NA
-"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","BW","mg /kg bw /day","ERF","ERF_omega3Data",-0.07,NA,NA
-"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","None","mg /day","Threshold","ERF_omega3Data",0,NA,NA
-"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","None","mg /day","ERF","ERF_omega3Data",-0.0013,NA,NA
-"Omega3","CHD2 mortality","Ingestion","RR","None","mg /day","Threshold","ERF_omega3Data",0,NA,NA
-"Omega3","CHD2 mortality","Ingestion","RR","None","mg /day","ERF","ERF_omega3Data",0.9999274,NA,NA
-"Omega3","Coronary heart disease mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","Threshold","ERF_omega3Data",0,NA,NA
-"Omega3","Coronary heart disease mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","ERF","ERF_omega3Data",0.998,NA,NA
-"Omega3","CHD arrythmia mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","Threshold","ERF_omega3Data",200,NA,NA
-"Omega3","CHD arrythmia mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","ERF","ERF_omega3Data",-0.3,NA,NA
-"Omega3","CHD2 mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","Threshold","ERF_omega3Data",47,NA,NA
-"Omega3","CHD2 mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","ERF","ERF_omega3Data",-0.17,NA,NA
-"Omega3","CHD3 mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","Threshold","ERF_omega3Data",0,NA,NA
-"Omega3","CHD3 mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","ERF","ERF_omega3Data",0.99951,NA,NA
-"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","Threshold","ERF_omega3Data",47,NA,NA
-"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","ERF","ERF_omega3Data",-0.12,NA,NA
-"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","Threshold","ERF_omega3Data",0,NA,NA
-"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","ERF","ERF_omega3Data",0.9998,NA,NA
-"ALA","CHD2 mortality","Ingestion","RR","None","mg /day","Threshold","ERF_omega3Data",0,NA,NA
-"ALA","CHD2 mortality","Ingestion","RR","None","mg /day","ERF","ERF_omega3Data",0.9999487,NA,NA
-"Fish","Subclinical brain infarct (one or more) prevalence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","Subclinical brain infarct (one or more) prevalence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","ERF","ERF_omega3Data",0.74,NA,NA
-"Fish","Any prevalent subclinical brain infarct prevalence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","Any prevalent subclinical brain infarct prevalence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","ERF","ERF_omega3Data",0.93,NA,NA
-"Fish","Subclinical brain infarct (one or more)incidence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","Subclinical brain infarct (one or more)incidence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","ERF","ERF_omega3Data",0.56,NA,NA
-"Fish","Any incident subclinical brain infarct incidence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","Any incident subclinical brain infarct incidence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","ERF","ERF_omega3Data",0.89,NA,NA
-"Fish","Status of cerebral white matter grade score","Ingested intake of tuna/other fish","ERS","None","Each one serving per week","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","Status of cerebral white matter grade score","Ingested intake of tuna/other fish","ERS","None","Each one serving per week","ERF","ERF_omega3Data",0.038,NA,NA
-"Fish","All-cause mortality","Ingestion","RR","None","g /d","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","All-cause mortality","Ingestion","RR","None","g /d","ERF","ERF_omega3Data",0.9978717,NA,NA
-"Omega3","Breast cancer","Ingestion","RR","None","mg /d","Threshold","ERF_omega3Data",0,NA,NA
-"Omega3","Breast cancer","Ingestion","RR","None","mg /d","ERF","ERF_omega3Data",0.9994872,NA,NA
-"Fish","Depression","Ingestion","RR","None","g /d","Threshold","ERF_omega3Data",0,NA,NA
-"Fish","Depression","Ingestion","RR","None","g /d","ERF","ERF_omega3Data",0.9946904,NA,NA
-"MeHg","Loss in child's IQ points","Through placenta as maternal MeHg concentration in hair","ERS","None","µg /g","Threshold","ERF_mehgData",0,NA,NA
-"MeHg","Loss in child's IQ points","Through placenta as maternal MeHg concentration in hair","ERS","None","µg /g","ERF","ERF_mehgData",0.7,NA,NA
-"MeHg","Loss in child's IQ points","Maternal ingested intake","ERS","BW","µg /kg /d","Threshold","ERF_mehgData",0,NA,NA
-"MeHg","Loss in child's IQ points","Maternal ingested intake","ERS","BW","µg /kg /d","ERF","ERF_mehgData",9.8,NA,NA
-"MeHg","MeHg TWI","Ingestion","TWI","BW","µg /kg /week","Threshold","ERF_mehgData",0,NA,NA
-"MeHg","MeHg TWI","Ingestion","TWI","BW","µg /kg /week","ERF","ERF_mehgData",1.3,NA,NA
-"Hg","Hg TWI","Ingestion","TWI","BW","µg /kg /week","Threshold","ERF_mehgData",0,NA,NA
-"Hg","Hg TWI","Ingestion","TWI","BW","µg /kg /week","ERF","ERF_mehgData",4,NA,NA
-"TEQ","Yes or no developmental dental defects incl. agenesis","Ingestion etc. (as it was in Seveso) as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Yes or no developmental dental defects incl. agenesis","Ingestion etc. (as it was in Seveso) as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","ERF","ERF_dioxData",0.26,NA,NA
-"TEQ","Yes or no tooth defect","Intake through placenta and mother's milk as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Yes or no tooth defect","Intake through placenta and mother's milk as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","ERF","ERF_dioxData",0.06,NA,NA
-"TEQ","Yes or no dental defect","Intake through placenta and mother's milk","ERS","None","pg /g","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Yes or no dental defect","Intake through placenta and mother's milk","ERS","None","pg /g","ERF","ERF_dioxData",0.00139097088395121,NA,NA
-"TEQ","Cancer morbidity","Ingested intake","CSF","BW","pg /kg /d","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Cancer morbidity","Ingested intake","CSF","BW","pg /kg /d","ERF","ERF_dioxData",5e-04,NA,NA
-"TEQ","Dioxin recommendation tolerable daily intake","Ingested intake","TDI","BW","pg /kg /d","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Dioxin recommendation tolerable daily intake","Ingested intake","TDI","BW","pg /kg /d","ERF","ERF_dioxData",2,NA,NA
-"TEQ","Dioxin recommendation tolerable daily intake 2018","Ingested intake","TDI","BW","pg /kg /d","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Dioxin recommendation tolerable daily intake 2018","Ingested intake","TDI","BW","pg /kg /d","ERF","ERF_dioxData",0.2889,NA,NA
-"TEQ","Sperm concentration","Intake through placenta and mother's milk","ERS","None","pg /g","Threshold","ERF_dioxData",0,NA,NA
-"TEQ","Sperm concentration","Intake through placenta and mother's milk","ERS","None","pg /g","ERF","ERF_dioxData",6e-05,NA,NA
-"Vitamin D","Vitamin D recommendation","Daily intake","Step","None","ug /d","Threshold","ERF_vitData",10,NA,NA
-"Vitamin D","Vitamin D recommendation","Daily intake","Step","None","ug /d","ERF","ERF_vitData",100,NA,NA
-"campylobacter","campylobacter infection","ingestion","beta poisson approximation","None","?","Threshold","ERF_micrData",0.011,NA,NA
-"campylobacter","campylobacter infection","ingestion","beta poisson approximation","None","?","ERF","ERF_micrData",0.024,NA,NA
-"rotavirus","rotavirus infection","ingestion","exact beta poisson","None","?","Threshold","ERF_micrData",0.191,NA,NA
-"rotavirus","rotavirus infection","ingestion","exact beta poisson","None","?","ERF","ERF_micrData",0.167,NA,NA
-"norovirus","norovirus infection","ingestion","exact beta poisson","None","?","Threshold","ERF_micrData",0.055,NA,NA
-"norovirus","norovirus infection","ingestion","exact beta poisson","None","?","ERF","ERF_micrData",0.04,NA,NA
-"sapovirus","sapovirus infection","ingestion","exact beta poisson","None","?","Threshold","ERF_micrData",0.055,NA,NA
-"sapovirus","sapovirus infection","ingestion","exact beta poisson","None","?","ERF","ERF_micrData",0.04,NA,NA
-"cryptosporidium","cryptosporidium infection","ingestion","exact beta poisson","None","?","Threshold","ERF_micrData",0.176,NA,NA
-"cryptosporidium","cryptosporidium infection","ingestion","exact beta poisson","None","?","ERF","ERF_micrData",0.115,NA,NA
-"giardia","giardia infection","ingestion","exponential","None","?","Threshold","ERF_micrData",0,NA,NA
-"giardia","giardia infection","ingestion","exponential","None","?","ERF","ERF_micrData",0.0199,NA,NA
-"E.coli O157:H7","E.coli O157:H7 infection","ingestion","exact beta poisson","None","?","Threshold","ERF_micrData",9.16,NA,NA
-"E.coli O157:H7","E.coli O157:H7 infection","ingestion","exact beta poisson","None","?","ERF","ERF_micrData",0.157,NA,NA
+"exposure_agent","response","exposure","er_function","scaling","exposure_unit","observation","source","Value","age","hepatitis"
+"Indoor radon","Lung cancer morbidity","Annual average indoor air concentration","RR","None","Bq /m3","param2","ERF_envData",0,NA,NA
+"Indoor radon","Lung cancer morbidity","Annual average indoor air concentration","RR","None","Bq /m3","param1","ERF_envData",1.0016,NA,NA
+"PM2.5","Lung cancer mortality","Annual average outdoor air concentration","RR","None","µg /m3","param2","ERF_envData",0,NA,NA
+"PM2.5","Lung cancer mortality","Annual average outdoor air concentration","RR","None","µg /m3","param1","ERF_envData",1.014,NA,NA
+"PM2.5","Cardiopulmonary mortality","Annual average outdoor concentration","RR","None","µg /m3","param2","ERF_envData",0,NA,NA
+"PM2.5","Cardiopulmonary mortality","Annual average outdoor concentration","RR","None","µg /m3","param1","ERF_envData",1.009,NA,NA
+"PM2.5","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","param2","ERF_envData",0,NA,NA
+"PM2.5","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","param1","ERF_envData",1.0062,NA,NA
+"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","param2","ERF_envData",0,NA,NA
+"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","param1","ERF_envData",1.0039,NA,NA
+"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","netrev /l","param2","ERF_envData",0,NA,NA
+"Chlorination byproducts","Bladder cancer morbidity","Concentration in ingested water","RR","None","netrev /l","param1","ERF_envData",1.000029,NA,NA
+"Arsenic","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","param2","ERF_envData",0,NA,NA
+"Arsenic","Bladder cancer morbidity","Concentration in ingested water","RR","None","µg /l","param1","ERF_envData",1.002,NA,NA
+"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","param2","ERF_envData",0,"<14",NA
+"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","param1","ERF_envData",1.0140743178,"<14",NA
+"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","param2","ERF_envData",0,">=14",NA
+"Formaldehyde","Asthma morbidity","Annual average indoor concentration","RR","None","µg /m3","param1","ERF_envData",1,">=14",NA
+"Dampness damage","Asthma morbidity","Yes/no moisture damage","RR","None","%","param2","ERF_envData",0,NA,NA
+"Dampness damage","Asthma morbidity","Yes/no moisture damage","RR","None","%","param1","ERF_envData",1.37,NA,NA
+"Dampness damage","Lower respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","param2","ERF_envData",0,NA,NA
+"Dampness damage","Lower respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","param1","ERF_envData",1.5,NA,NA
+"Dampness damage","Upper respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","param2","ERF_envData",0,NA,NA
+"Dampness damage","Upper respiratory symptoms morbidity","Yes/no moisture damage","RR","None","%","param1","ERF_envData",1.7,NA,NA
+"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","param2","ERF_envData",0,"<14",NA
+"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","param1","ERF_envData",0.125,"<14",NA
+"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","param2","ERF_envData",0,">=14",NA
+"Fluoride","Fluorosis","Concentration in ingested water","UR","None","","param1","ERF_envData",0,">=14",NA
+"Outdoor ozone","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","param2","ERF_envData",0,NA,NA
+"Outdoor ozone","Total mortality","Annual average outdoor air concentration","RR","None","µg /m3","param1","ERF_envData",1.000299596,NA,NA
+"Lead","Decrease of IQ below 70 points","Intake level from food","UR","None"," ?","param2","ERF_envData",0,NA,NA
+"Lead","Decrease of IQ below 70 points","Intake level from food","UR","None"," ?","param1","ERF_envData",0.025,NA,NA
+"Lead","Increased blood pressure","Intake level from food","UR","None","? ","param2","ERF_envData",0,NA,NA
+"Lead","Increased blood pressure","Intake level from food","UR","None","? ","param1","ERF_envData",0.025,NA,NA
+"Lead","IQ loss","Blood concentration","UR","None","IQ l /ug","param2","ERF_envData",24,"Age 1",NA
+"Lead","IQ loss","Blood concentration","UR","None","IQ l /ug","param1","ERF_envData",0.039,"Age 1",NA
+"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","param2","ERF_envData",0,NA,"Hepatitis B-"
+"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","param1","ERF_envData",0.01,NA,"Hepatitis B-"
+"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","param2","ERF_envData",0,NA,"Hepatitis B+"
+"Aflatoxin","Liver cancer","Intake via food","UR","None","# /(ng /kg /d /100000py)","param1","ERF_envData",0.3,NA,"Hepatitis B+"
+"Formaldehyde","Nasal cancer morbidity","Annual average indoor concentration","UR","None","µg /m3","param2","ERF_envData",0,NA,NA
+"Formaldehyde","Nasal cancer morbidity","Annual average indoor concentration","UR","None","µg /m3","param1","ERF_envData",1.3e-05,NA,NA
+"Benzene","Leukemia morbidity","Annual average indoor concentration","UR","None"," µg /m3","param2","ERF_envData",0,NA,NA
+"Benzene","Leukemia morbidity","Annual average indoor concentration","UR","None"," µg /m3","param1","ERF_envData",5e-06,NA,NA
+"Quatzdust","Silicosis morbidity","Indoor air concentration","UR","None","mg /m3","param2","ERF_envData",0,NA,NA
+"Quatzdust","Silicosis morbidity","Indoor air concentration","UR","None","mg /m3","param1","ERF_envData",0.166666666666667,NA,NA
+"Asbestos at work","Lung cancer and mesothelioma morbidity","Indoor air concentration","UR","None"," ","param2","ERF_envData",0,NA,NA
+"Asbestos at work","Lung cancer and mesothelioma morbidity","Indoor air concentration","UR","None"," ","param1","ERF_envData",0.05,NA,NA
+"Noise at work","Hearing damage","Noise level","UR","None"," ","param2","ERF_envData",0,NA,NA
+"Noise at work","Hearing damage","Noise level","UR","None"," ","param1","ERF_envData",570,NA,NA
+"Noise at work","Hearing damage","Noise level","UR","None"," ","param2","ERF_envData",0,NA,NA
+"Noise at work","Hearing damage","Noise level","UR","None"," ","param1","ERF_envData",1320,NA,NA
+"Outdoor ozone","Mild decreasing on general functioning","Annual average outdoor air concentration","UR","None","µg /m3","param2","ERF_envData",0,NA,NA
+"Outdoor ozone","Mild decreasing on general functioning","Annual average outdoor air concentration","UR","None","µg /m3","param1","ERF_envData",0.115,NA,NA
+"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","BW","mg /kg bw /day","param2","ERF_omega3Data",0,NA,NA
+"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","BW","mg /kg bw /day","param1","ERF_omega3Data",-0.07,NA,NA
+"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","None","mg /day","param2","ERF_omega3Data",0,NA,NA
+"DHA","Loss in child's IQ points","Maternal intake through placenta","ERS","None","mg /day","param1","ERF_omega3Data",-0.0013,NA,NA
+"Omega3","CHD2 mortality","Ingestion","RR","None","mg /day","param2","ERF_omega3Data",0,NA,NA
+"Omega3","CHD2 mortality","Ingestion","RR","None","mg /day","param1","ERF_omega3Data",0.9999274,NA,NA
+"Omega3","Coronary heart disease mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","param2","ERF_omega3Data",0,NA,NA
+"Omega3","Coronary heart disease mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","param1","ERF_omega3Data",0.998,NA,NA
+"Omega3","CHD arrythmia mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","param2","ERF_omega3Data",200,NA,NA
+"Omega3","CHD arrythmia mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","param1","ERF_omega3Data",-0.3,NA,NA
+"Omega3","CHD2 mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","param2","ERF_omega3Data",47,NA,NA
+"Omega3","CHD2 mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","param1","ERF_omega3Data",-0.17,NA,NA
+"Omega3","CHD3 mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","param2","ERF_omega3Data",0,NA,NA
+"Omega3","CHD3 mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","param1","ERF_omega3Data",0.99951,NA,NA
+"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","param2","ERF_omega3Data",47,NA,NA
+"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","Relative Hill","None","mg /day","param1","ERF_omega3Data",-0.12,NA,NA
+"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","param2","ERF_omega3Data",0,NA,NA
+"Omega3","Stroke mortality","Ingested intake of EPA+DHA from fish","RR","None","mg /day","param1","ERF_omega3Data",0.9998,NA,NA
+"ALA","CHD2 mortality","Ingestion","RR","None","mg /day","param2","ERF_omega3Data",0,NA,NA
+"ALA","CHD2 mortality","Ingestion","RR","None","mg /day","param1","ERF_omega3Data",0.9999487,NA,NA
+"Fish","Subclinical brain infarct (one or more) prevalence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","param2","ERF_omega3Data",0,NA,NA
+"Fish","Subclinical brain infarct (one or more) prevalence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","param1","ERF_omega3Data",0.74,NA,NA
+"Fish","Any prevalent subclinical brain infarct prevalence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","param2","ERF_omega3Data",0,NA,NA
+"Fish","Any prevalent subclinical brain infarct prevalence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","param1","ERF_omega3Data",0.93,NA,NA
+"Fish","Subclinical brain infarct (one or more)incidence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","param2","ERF_omega3Data",0,NA,NA
+"Fish","Subclinical brain infarct (one or more)incidence","Ingested intake of tuna/other fish","RR","None","≥3 times/week vs. <1/month","param1","ERF_omega3Data",0.56,NA,NA
+"Fish","Any incident subclinical brain infarct incidence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","param2","ERF_omega3Data",0,NA,NA
+"Fish","Any incident subclinical brain infarct incidence","Ingested intake of tuna/other fish","RR","None","Each one serving per week","param1","ERF_omega3Data",0.89,NA,NA
+"Fish","Status of cerebral white matter grade score","Ingested intake of tuna/other fish","ERS","None","Each one serving per week","param2","ERF_omega3Data",0,NA,NA
+"Fish","Status of cerebral white matter grade score","Ingested intake of tuna/other fish","ERS","None","Each one serving per week","param1","ERF_omega3Data",0.038,NA,NA
+"Fish","All-cause mortality","Ingestion","RR","None","g /d","param2","ERF_omega3Data",0,NA,NA
+"Fish","All-cause mortality","Ingestion","RR","None","g /d","param1","ERF_omega3Data",0.9978717,NA,NA
+"Omega3","Breast cancer","Ingestion","RR","None","mg /d","param2","ERF_omega3Data",0,NA,NA
+"Omega3","Breast cancer","Ingestion","RR","None","mg /d","param1","ERF_omega3Data",0.9994872,NA,NA
+"Fish","Depression","Ingestion","RR","None","g /d","param2","ERF_omega3Data",0,NA,NA
+"Fish","Depression","Ingestion","RR","None","g /d","param1","ERF_omega3Data",0.9946904,NA,NA
+"MeHg","Loss in child's IQ points","Through placenta as maternal MeHg concentration in hair","ERS","None","µg /g","param2","ERF_mehgData",0,NA,NA
+"MeHg","Loss in child's IQ points","Through placenta as maternal MeHg concentration in hair","ERS","None","µg /g","param1","ERF_mehgData",0.7,NA,NA
+"MeHg","Loss in child's IQ points","Maternal ingested intake","ERS","BW","µg /kg /d","param2","ERF_mehgData",0,NA,NA
+"MeHg","Loss in child's IQ points","Maternal ingested intake","ERS","BW","µg /kg /d","param1","ERF_mehgData",9.8,NA,NA
+"MeHg","MeHg TWI","Ingestion","TWI","BW","µg /kg /week","param2","ERF_mehgData",0,NA,NA
+"MeHg","MeHg TWI","Ingestion","TWI","BW","µg /kg /week","param1","ERF_mehgData",1.3,NA,NA
+"Hg","Hg TWI","Ingestion","TWI","BW","µg /kg /week","param2","ERF_mehgData",0,NA,NA
+"Hg","Hg TWI","Ingestion","TWI","BW","µg /kg /week","param1","ERF_mehgData",4,NA,NA
+"TEQ","Yes or no developmental dental defects incl. agenesis","Ingestion etc. (as it was in Seveso) as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","param2","ERF_dioxData",0,NA,NA
+"TEQ","Yes or no developmental dental defects incl. agenesis","Ingestion etc. (as it was in Seveso) as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","param1","ERF_dioxData",0.26,NA,NA
+"TEQ","Yes or no tooth defect","Intake through placenta and mother's milk as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","param2","ERF_dioxData",0,NA,NA
+"TEQ","Yes or no tooth defect","Intake through placenta and mother's milk as log(TCDD serum concentration+1) in fat","ERS","Log10","log(pg /g)","param1","ERF_dioxData",0.06,NA,NA
+"TEQ","Yes or no dental defect","Intake through placenta and mother's milk","ERS","None","pg /g","param2","ERF_dioxData",0,NA,NA
+"TEQ","Yes or no dental defect","Intake through placenta and mother's milk","ERS","None","pg /g","param1","ERF_dioxData",0.00139097088395121,NA,NA
+"TEQ","Cancer morbidity","Ingested intake","CSF","BW","pg /kg /d","param2","ERF_dioxData",0,NA,NA
+"TEQ","Cancer morbidity","Ingested intake","CSF","BW","pg /kg /d","param1","ERF_dioxData",5e-04,NA,NA
+"TEQ","Dioxin recommendation tolerable daily intake","Ingested intake","TDI","BW","pg /kg /d","param2","ERF_dioxData",0,NA,NA
+"TEQ","Dioxin recommendation tolerable daily intake","Ingested intake","TDI","BW","pg /kg /d","param1","ERF_dioxData",2,NA,NA
+"TEQ","Dioxin recommendation tolerable daily intake 2018","Ingested intake","TDI","BW","pg /kg /d","param2","ERF_dioxData",0,NA,NA
+"TEQ","Dioxin recommendation tolerable daily intake 2018","Ingested intake","TDI","BW","pg /kg /d","param1","ERF_dioxData",0.2889,NA,NA
+"TEQ","Sperm concentration","Intake through placenta and mother's milk","ERS","None","pg /g","param2","ERF_dioxData",0,NA,NA
+"TEQ","Sperm concentration","Intake through placenta and mother's milk","ERS","None","pg /g","param1","ERF_dioxData",6e-05,NA,NA
+"Vitamin D","Vitamin D recommendation","Daily intake","Step","None","ug /d","param2","ERF_vitData",10,NA,NA
+"Vitamin D","Vitamin D recommendation","Daily intake","Step","None","ug /d","param1","ERF_vitData",100,NA,NA
+"campylobacter","campylobacter infection","ingestion","beta poisson approximation","None","?","param2","ERF_micrData",0.011,NA,NA
+"campylobacter","campylobacter infection","ingestion","beta poisson approximation","None","?","param1","ERF_micrData",0.024,NA,NA
+"rotavirus","rotavirus infection","ingestion","exact beta poisson","None","?","param2","ERF_micrData",0.191,NA,NA
+"rotavirus","rotavirus infection","ingestion","exact beta poisson","None","?","param1","ERF_micrData",0.167,NA,NA
+"norovirus","norovirus infection","ingestion","exact beta poisson","None","?","param2","ERF_micrData",0.055,NA,NA
+"norovirus","norovirus infection","ingestion","exact beta poisson","None","?","param1","ERF_micrData",0.04,NA,NA
+"sapovirus","sapovirus infection","ingestion","exact beta poisson","None","?","param2","ERF_micrData",0.055,NA,NA
+"sapovirus","sapovirus infection","ingestion","exact beta poisson","None","?","param1","ERF_micrData",0.04,NA,NA
+"cryptosporidium","cryptosporidium infection","ingestion","exact beta poisson","None","?","param2","ERF_micrData",0.176,NA,NA
+"cryptosporidium","cryptosporidium infection","ingestion","exact beta poisson","None","?","param1","ERF_micrData",0.115,NA,NA
+"giardia","giardia infection","ingestion","exponential","None","?","param2","ERF_micrData",0,NA,NA
+"giardia","giardia infection","ingestion","exponential","None","?","param1","ERF_micrData",0.0199,NA,NA
+"E.coli O157:H7","E.coli O157:H7 infection","ingestion","exact beta poisson","None","?","param2","ERF_micrData",9.16,NA,NA
+"E.coli O157:H7","E.coli O157:H7 infection","ingestion","exact beta poisson","None","?","param1","ERF_micrData",0.157,NA,NA
