@@ -10,7 +10,7 @@ import settings
 # Emission_height (for intake fraction)
 # Population_density (for intake fraction)
 # Response (for health impact)
-# Route (do we need this?)
+# Route (We need this for telling which parameter columns to use)
 # Er_function (name of the exposure-response function to use)
 # Erf_context (approximate combination of exposure agent, response and possibly other determinants)
 # Vehicle
@@ -20,6 +20,13 @@ import settings
 # Case_burden
 # Case_cost
 # NOTE! Parameter names are NOT written with initial capital letter, because they are not words but symbols.
+
+# Syntax for parameter names
+# There are two or three parts separated by '_'.
+# First part tells the route and thus defines the base unit.
+# Second part tells the power n of the parameter unit: base_unit**n where
+# the names m3, m2, m1, p0, p1 mean n = -3, -2, -1, 0, 1, respectively.
+# Third part is just a number to differentiate parameters with the same unit.
 
 unit_registry = pint.UnitRegistry(
     preprocessors=[
@@ -59,15 +66,15 @@ repo = Repository(repo_url='git@github.com:kausaltech/dvctest.git', dvc_remote='
 df = pd.DataFrame({
     'Vehicle': pd.Series(['walking', 'cycling']),
     'Velocity': pd.Series([5.3, 14.]),
+    'Route': pd.Series(['exercise'] * 2),
     'Metabolic_equivalent': pd.Series([4., 6.8]),
     'Weekly_activity': pd.Series([3., 3.]),
     'Erf_context': pd.Series(['walking mortality', 'cycling mortality']),
     'Pollutant': pd.Series(['physical activity'] * 2),
     'Response': pd.Series(['mortality'] * 2),
     'Period': pd.Series([1., 1.]),
-    'Route': pd.Series(['exercise'] * 2),
     'Er_function': pd.Series(['relative risk'] * 2),
-    'param_inv_exposure': pd.Series([-0.0093653792] * 2),
+    'exercise_m1': pd.Series([-0.0093653792] * 2),
 })
 
 unit = dict({
@@ -75,7 +82,7 @@ unit = dict({
     'Metabolic_equivalent': 'METh / h',
     'Weekly_activity': 'day / week',
     'Period': 'a / incident',
-    'param_inv_exposure': 'week / METh',
+    'exercise_m1': 'week / METh',
 })
 
 metadata = dict({
@@ -99,7 +106,7 @@ metadata = dict({
         'meta-analysis of reduction in all-cause mortality from walking and cycling and shape ' +
         'of dose response relationship. Int J Behav Nutr Phys Act 11, 132 (2014). ' +
         'https://doi.org/10.1186/s12966-014-0132-x',
-        'param_inv_exposure': 'log(0.9)/(11.25 METh/week)',
+        'exercise_m1': 'log(0.9)/(11.25 METh/week)',
     }
 })
 
@@ -123,16 +130,16 @@ df = pd.DataFrame({
     'Period': pd.Series([1.] * 4),
     'Route': pd.Series(['inhalation'] * 4),
     'Er_function': pd.Series(['relative risk'] * 4),
-    'param_inv_inhalation': pd.Series([0.007696104114, 0.00449733656, 0.0019802627, 0.0076961941]),
-    'param_inhalation': pd.Series([0.] * 4),
+    'inhalation_m1': pd.Series([0.007696104114, 0.00449733656, 0.0019802627, 0.0076961941]),
+    'inhalation_p1': pd.Series([0.] * 4),
     'Default_incidence': pd.Series([18496 / 5533793, 12, 18496 / 5533793, 390 / 100000]),
     'Case_burden': pd.Series([10.6, 0.00027, 10.6, 0.99]),
     'Case_cost': pd.Series([0., 152, 0, 62712]),
 })
 unit = dict({
     'Period': 'year / incident',
-    'param_inv_inhalation': 'm**3 / ug',
-    'param_inhalation': 'ug / m**3',
+    'inhalation_m1': 'm**3 / ug',
+    'inhalation_p1': 'ug / m**3',
     'Default_incidence': 'cases / personyear',
     'Case_burden': 'DALY / case',
     'Case_cost': 'EUR / case',
@@ -191,20 +198,20 @@ df = pd.DataFrame({
     'Period': pd.Series([1.] * 6),
     'Route': pd.Series(['noise'] * 6),
     'Er_function': pd.Series(['polynomial'] * 6),
-    'param_exposure': pd.Series([42., 42, 42, 0, 0, 0]),
-    'param_poly0': pd.Series([0, 0, 0, 0.208, 0.113, 0.18147]),
-    'param_poly1': pd.Series([5.118E-03, 1.695E-03, 2.939E-03, -1.050E-02, -5.500E-03, -9.560E-03]),
-    'param_poly2': pd.Series([-1.436E-04, -7.851E-05, 3.932E-04, 1.486E-04, 7.590E-05, 1.482E-04]),
-    'param_poly3': pd.Series([9.868E-06, 7.239E-06, -9.199E-07, 0, 0, 0]),
+    'noise_p1': pd.Series([42., 42, 42, 0, 0, 0]),
+    'noise_p0': pd.Series([0, 0, 0, 0.208, 0.113, 0.18147]),
+    'noise_m1': pd.Series([5.118E-03, 1.695E-03, 2.939E-03, -1.050E-02, -5.500E-03, -9.560E-03]),
+    'noise_m2': pd.Series([-1.436E-04, -7.851E-05, 3.932E-04, 1.486E-04, 7.590E-05, 1.482E-04]),
+    'noise_m3': pd.Series([9.868E-06, 7.239E-06, -9.199E-07, 0, 0, 0]),
     'Case_burden': pd.Series([0.02, 0.02, 0.02, 0.07, 0.07, 0.07]),
 })
 
 unit = dict({
     'Period': 'a / incident',
-    'param_exposure': 'Lden dB',
-    'param_poly1': '(Lden dB)**-1',
-    'param_poly2': '(Lden dB)**-2',
-    'param_poly3': '(Lden dB)**-3',
+    'noise_p1': 'Lden',
+    'noise_m1': '(Lden)**-1',
+    'noise_m2': '(Lden)**-2',
+    'noise_m3': '(Lden)**-3',
     'Case_burden': 'DALY / case',
 })
 
@@ -242,18 +249,18 @@ df = pd.DataFrame({
     'Route': pd.Series(['ingestion'] * 7),
     'Er_function': pd.Series(['beta poisson approximation'] + ['exact beta poisson'] * 5 + ['exponential']),
     'Case_burden': pd.Series([0.002] * 7),
-    'param_ingestion': pd.Series([0.011, 0.167, 0.04, 0.04, 0.115, 0.157, None]),
-    'param2_ingestion': pd.Series([None, 0.191, 0.055, 0.055, 0.176, 9.16, None]),
-    'param_scale': pd.Series([0.024] + [None] * 6),
-    'param_inv_ingestion': pd.Series([None] * 6 + [0.0199]),
+    'ingestion_p1': pd.Series([0.011, 0.167, 0.04, 0.04, 0.115, 0.157, None]),
+    'ingestion_p1_2': pd.Series([None, 0.191, 0.055, 0.055, 0.176, 9.16, None]),
+    'ingestion_p0': pd.Series([0.024] + [None] * 6),
+    'ingestion_m1': pd.Series([None] * 6 + [0.0199]),
 })
 
 units = {
     'Period': 'days / incident',
     'Case_burden': 'DALY / case',
-    'param_ingestion': 'microbes / day',
-    'param2_ingestion': 'microbes / day',
-    'param_inv_ingestion': 'day / microbes'
+    'ingestion_p1': 'microbes / day',
+    'ingestion_p1_2': 'microbes / day',
+    'ingestion_m1': 'day / microbes'
 }
 
 metadata = {
@@ -388,13 +395,13 @@ df = pd.DataFrame({
     'Period': pd.Series([80., 1, 80, 80, 1]),
     'Route': pd.Series(['exposure'] * 2 + ['ingestion'] * 3),
     'Er_function': pd.Series(['unit risk', 'step function', 'relative Hill', 'relative risk', 'step function']),
-    'param_inv_exposure': pd.Series([0.001, None, None, None, None], dtype='pint[kg d / pg]'),
-    'param_exposure': pd.Series([0., 0, None, None, None], dtype='pint[pg/kg/d]'),
-    'param2_exposure': pd.Series([None, 2., None, None, None], dtype='pint[pg/kg/week]'),
-    'param_ingestion': pd.Series([None, None, 47, 0, 10e-3], dtype='pint[mg/d]'),
-    'param2_ingestion': pd.Series([None, None, None, None, 100.], dtype='pint[ug/d]'),
-    'param_inv_ingestion': pd.Series([None, None, None, -0.5129329439, None], dtype='pint[g/d]'),
-    'param_scale': pd.Series([None, None, -0.17, None, None]),
+    'exposure_m1': pd.Series([0.001, None, None, None, None], dtype='pint[kg d / pg]'),
+    'exposure_p1': pd.Series([0., 0, None, None, None], dtype='pint[pg/kg/d]'),
+    'exposure_p1_2': pd.Series([None, 2., None, None, None], dtype='pint[pg/kg/week]'),
+    'ingestion_p1': pd.Series([None, None, 47, 0, 10e-3], dtype='pint[mg/d]'),
+    'ingestion_p1_2': pd.Series([None, None, None, None, 100.], dtype='pint[ug/d]'),
+    'ingestion_m1': pd.Series([None, None, None, -0.5129329439, None], dtype='pint[d/g]'),
+    'ingestion_p0': pd.Series([None, None, -0.17, None, None]),
     'Default_incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1], dtype='pint[case/year]'),
     'Case_burden': pd.Series([19.7, 0.0001, 10, 19.7, 0.001], dtype='pint[DALY/case]'),
 })
@@ -439,7 +446,7 @@ ds_food = Dataset(
     metadata=metadata
 )
 
-if False:
+if True:
     repo.push_dataset(ds_act)
     repo.push_dataset(ds_air)
     repo.push_dataset(ds_noise)
