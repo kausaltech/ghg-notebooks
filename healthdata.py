@@ -182,6 +182,31 @@ ds_air = Dataset(
     units=unit,
     metadata=metadata)
 
+# Indoor air pollution
+
+df = pd.DataFrame({
+    'Erf_exposure': pd.Series(['radon lung_cancer']),
+    'Pollutant': pd.Series(['radon']),
+    'Response': pd.Series(['lung cancer']),
+    'Period': pd.Series([80], dtype='pint[a]'),
+    'Route': pd.Series(['inhalationBq']),
+    'Er_function': pd.Series(['relative risk']),
+    'inhalationBq_m1': pd.Series([0.0015987213636970735], dtype='pint[m**3 / Bq]'),
+    'inhalationBq_p1': pd.Series([0], dtype='pint[Bq / m**3]'),
+})
+
+metadata = {
+    'references': {
+        'General': 'http://en.opasnet.org/w/ERF_for_long-term_indoor_exposure_to_radon_and_lung_cancer' + 
+        'http://en.opasnet.org/w/ERFs_of_environmental_pollutants',
+        'Er_function': 'log(1.0016) Darby 2005 http://www.bmj.com/cgi/content/full/330/7485/223'
+    }
+}
+
+ds_indoor = Dataset(
+    df=df,
+    identifier='hia/exposure_response/indoor_air',
+    metadata=metadata)
 
 # Noise
 
@@ -266,7 +291,8 @@ units = {
 metadata = {
     'references': {
         'General': 'http://en.opasnet.org/w/Water_guide',
-        'Er_function': 'http://en.opasnet.org/w/ERF_of_waterborne_microbes'
+        'Er_function': 'http://en.opasnet.org/w/ERF_of_waterborne_microbes',
+        'Case_burden': 'nominal value for gastroenteritis. Excludes complications http://en.opasnet.org/w/Case_burden_of_waterborne_microbes'
     }
 }
 
@@ -446,11 +472,13 @@ ds_food = Dataset(
     metadata=metadata
 )
 
-if True:
+if False:
     repo.push_dataset(ds_act)
     repo.push_dataset(ds_air)
     repo.push_dataset(ds_noise)
     repo.push_dataset(ds_if)
     repo.push_dataset(ds_tef)
     repo.push_dataset(ds_food)
-    repo.push_dataset(ds_micr)
+
+repo.push_dataset(ds_micr)
+repo.push_dataset(ds_indoor)
