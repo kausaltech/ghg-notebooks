@@ -132,7 +132,6 @@ df = pd.DataFrame({
     'Er_function': pd.Series(['relative risk'] * 4),
     'inhalation_m1': pd.Series([0.007696104114, 0.00449733656, 0.0019802627, 0.0076961941]),
     'inhalation_p1': pd.Series([0.] * 4),
-    'Default_incidence': pd.Series([18496 / 5533793, 12, 18496 / 5533793, 390 / 100000]),
     'Case_burden': pd.Series([10.6, 0.00027, 10.6, 0.99]),
     'Case_cost': pd.Series([0., 152, 0, 62712]),
 })
@@ -140,7 +139,6 @@ unit = dict({
     'Period': 'year / incident',
     'inhalation_m1': 'm**3 / ug',
     'inhalation_p1': 'ug / m**3',
-    'Default_incidence': 'cases / personyear',
     'Case_burden': 'DALY / case',
     'Case_cost': 'EUR / case',
 })
@@ -150,26 +148,22 @@ metadata = {
         'PM2_5 mortality': {
             'General': 'http://en.opasnet.org/w/ERF_of_outdoor_air_pollution',
             'Er_function': 'log(1.08)/10 Chen & Hoek, 2020',
-            'default_-incidence': 'https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
             'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
         },
         'PM2_5 work_days_lost': {
             'General': 'http://fi.opasnet.org/fi/Kiltova',
             'Er_function': 'log(1.046)/10 HRAPIE',
-            'incidence': 'PAQ2018',
             'Case_burden': '0.099 DW * 0.00274 a, Heimtsa & Intarese http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
         },
         'NOx mortality': {
             'General': 'For NO2 atm.  http://fi.opasnet.org/fi/Kiltova, Atkinson et al., 2017',
             'Er_function': 'log(1.02)/10',
-            'Default_incidence': 'Same as PM2.5 https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
             'Case_burden': 'Same as PM2.5 De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
         },
         'PM10 chronic bronchitis': {
             'General': 'http://fi.opasnet.org/fi/Kiltova',
             'Er_function': 'log(1.08)/10 HRAPIE',
-            'Default_incidence': 'PAQ2018',
             'Case_burden': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
         }
@@ -197,7 +191,7 @@ df = pd.DataFrame({
 
 metadata = {
     'references': {
-        'General': 'http://en.opasnet.org/w/ERF_for_long-term_indoor_exposure_to_radon_and_lung_cancer' + 
+        'General': 'http://en.opasnet.org/w/ERF_for_long-term_indoor_exposure_to_radon_and_lung_cancer ' + 
         'http://en.opasnet.org/w/ERFs_of_environmental_pollutants',
         'Er_function': 'log(1.0016) Darby 2005 http://www.bmj.com/cgi/content/full/330/7485/223'
     }
@@ -428,7 +422,6 @@ df = pd.DataFrame({
     'ingestion_p1_2': pd.Series([None, None, None, None, 100.], dtype='pint[ug/d]'),
     'ingestion_m1': pd.Series([None, None, None, -0.5129329439, None], dtype='pint[d/g]'),
     'ingestion_p0': pd.Series([None, None, -0.17, None, None]),
-    'Default_incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1], dtype='pint[case/year]'),
     'Case_burden': pd.Series([19.7, 0.0001, 10, 19.7, 0.001], dtype='pint[DALY/case]'),
 })
 
@@ -437,34 +430,31 @@ metadata = {
         'dioxin cancer': {
             'General': 'http://en.opasnet.org/w/ERF_of_dioxin',
             'Er_function': 'U.S.EPA 2004. https://cfpub.epa.gov/ncea/risk/recordisplay.cfm?deid=87843',
-            'Default_incidence': 'https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
             'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
         },
         'dioxin tolerable_weekly_intake': {
             'General': 'http://en.opasnet.org/w/ERF_of_dioxin',
             'Er_function': 'EFSA dioxin recommendation 2018',
-            'Default_incidence': 'nominal; everyone is exposed',
             'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
         },
         'omega3 chd_mortality': {
             'General': 'http://en.opasnet.org/w/ERF_of_omega-3_fatty_acids',
             'Er_function': 'Cohen et al 2005 http://www.ncbi.nlm.nih.gov/pubmed/16242602',
-            'Default_incidence': 'https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
             'Case_burden': 'http://fi.opasnet.org/fi/Goherr_assessment#Model_parameters',
         },
         'omega3 breast_cancer': {
             'General': 'http://en.opasnet.org/w/ERF_of_omega-3_fatty_acids',
             'Er_function': 'log(0.95)/(0.1 g/d)',
-            'Default_incidence': 'https://syoparekisteri.fi/tilastot/tautitilastot/?_inputs_&value_type="inc.rate"&submit=2&tabset_panel="2"&value_theme="theme_inc"&tabu="inc_ts1"&table_cells_selected=[]&language="fi"&in.subset.sites=["0L","24L"]&in.subset.sex="-1L"&in.subset.area="-1L"&table_view="v2"&table_rows_selected=null&table_columns_selected=null&',
             'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
         },
         'vitamin_D deficiency': {
             'Period': 'sunlight prevents deficiency during summer',
             'Er_function': 'http://en.opasnet.org/w/ERFs_of_vitamins',
             'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
-        }
+        },
     }
 }
+
 
 ds_food = Dataset(
     df=df,
@@ -472,13 +462,79 @@ ds_food = Dataset(
     metadata=metadata
 )
 
+
+## Incidence
+
+df = pd.DataFrame({
+    'Erf_context': pd.Series([
+        'dioxin cancer',
+        'dioxin tolerable_weekly_intake',
+        'omega3 chd_mortality',
+        'omega3 breast_cancer',
+        'vitamin_D deficiency',
+        'PM2_5 mortality',
+    ]),
+    'Place': pd.Series(['default'] * 9),
+    'Population': pd.Series(['default'] * 9),
+    'Incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1, 18496 / 5533793, 12, 18496 / 5533793, 390 / 100000], dtype='pint[cases/personyear]'),
+})
+
+metadata = {
+    'references': {
+        'dioxin cancer': {
+            'Incidence': 'https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
+            'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
+        },
+        'dioxin tolerable_weekly_intake': {
+            'Incidence': 'nominal; everyone is exposed',
+            'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
+        },
+        'omega3 chd_mortality': {
+            'Incidence': 'https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
+            'Case_burden': 'http://fi.opasnet.org/fi/Goherr_assessment#Model_parameters',
+        },
+        'omega3 breast_cancer': {
+            'Incidence': 'https://syoparekisteri.fi/tilastot/tautitilastot/?_inputs_&value_type="inc.rate"&submit=2&tabset_panel="2"&value_theme="theme_inc"&tabu="inc_ts1"&table_cells_selected=[]&language="fi"&in.subset.sites=["0L","24L"]&in.subset.sex="-1L"&in.subset.area="-1L"&table_view="v2"&table_rows_selected=null&table_columns_selected=null&',
+            'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
+        },
+        'vitamin_D deficiency': {
+            'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
+        },
+        'PM2_5 mortality': {
+            'Incidence': '18496 cases / (5533793 personyears) https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
+            'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
+        },
+        'PM2_5 mortality': {
+            'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
+        },
+        'PM2_5 work_days_lost': {
+            'Case_burden': '0.099 DW * 0.00274 a, Heimtsa & Intarese http://fi.opasnet.org/fi/Kiltova#PAQ2018',
+            'Case_cost': 'Holland et al., 2014'
+        },
+        'NOx mortality': {
+            'Case_burden': 'Same as PM2.5 De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
+        },
+        'PM10 chronic bronchitis': {
+            'Case_burden': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
+            'Case_cost': 'Holland et al., 2014'
+        }
+
+    }
+}
+
+ds_incidence = Dataset(
+    df=df,
+    identifier='hia/incidence/default',
+    metadata=metadata)
+
 if False:
     repo.push_dataset(ds_act)
-    repo.push_dataset(ds_air)
     repo.push_dataset(ds_noise)
     repo.push_dataset(ds_if)
     repo.push_dataset(ds_tef)
-    repo.push_dataset(ds_food)
+    repo.push_dataset(ds_micr)
+    repo.push_dataset(ds_indoor)
 
-repo.push_dataset(ds_micr)
-repo.push_dataset(ds_indoor)
+repo.push_dataset(ds_food)
+repo.push_dataset(ds_air)
+repo.push_dataset(ds_incidence)
