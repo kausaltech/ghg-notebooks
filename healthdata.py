@@ -222,6 +222,7 @@ df = pd.DataFrame({
     'noise_m1': pd.Series([5.118E-03, 1.695E-03, 2.939E-03, -1.050E-02, -5.500E-03, -9.560E-03]),
     'noise_m2': pd.Series([-1.436E-04, -7.851E-05, 3.932E-04, 1.486E-04, 7.590E-05, 1.482E-04]),
     'noise_m3': pd.Series([9.868E-06, 7.239E-06, -9.199E-07, 0, 0, 0]),
+    'Incidence': pd.Series([1.] * 6),
     'Case_burden': pd.Series([0.02, 0.02, 0.02, 0.07, 0.07, 0.07]),
 })
 
@@ -231,6 +232,7 @@ unit = dict({
     'noise_m1': '(Lden)**-1',
     'noise_m2': '(Lden)**-2',
     'noise_m3': '(Lden)**-3',
+    'Incidence': 'cases / a',
     'Case_burden': 'DALY / case',
 })
 
@@ -240,6 +242,7 @@ metadata = {
         'see e.g. https://cdr.eionet.europa.eu/fi/eu/noise/df8/2017/envwjdfiq',
         'Er_function': 'All exposure-response functions: WHO & JRC 2011 (values scaled from % to ' +
         'fraction). https://apps.who.int/iris/handle/10665/326424',
+        'Incidence': 'Nominal value that matches period and case burden',
         'Case_burden': 'disability weight 0.02, duration 1 year',
     }
 }
@@ -300,12 +303,12 @@ ds_micr = Dataset(
 # Intake fractions
 
 df = pd.DataFrame({
-    'Pollutant': pd.Series(['PM10-2_5'] * 4 + ['PM2_5'] * 4 + ['SO2', 'NOx', 'NH3']),
-    'Emission_height': pd.Series(['high', 'low', 'ground', 'average'] * 2 + [None] * 3),
-    'urban': pd.Series([8.8, 13, 40, 37, 11, 15, 44, 26, 0.99, 0.2, 1.7]),
-    'rural': pd.Series([0.7, 1.1, 3.7, 3.4, 1.6, 2, 3.8, 2.6, 0.79, 0.17, 1.7]),
-    'remote': pd.Series([0.04, 0.04, 0.04, 0.04, 0.1, 0.1, 0.1, 0.1, 0.05, 0.01, 0.1]),
-    'average': pd.Series([5, 7.5, 23, 21, 6.8, 6.8, 25, 15, 0.89, 0.18, 1.7]),
+    'Pollutant': pd.Series(['PM10-2_5'] * 4 + ['PM2_5'] * 4 + ['SO2'] * 4 + ['NOx'] * 4 + ['NH3'] * 4),
+    'Emission_height': pd.Series(['high', 'low', 'ground', 'average'] * 5),
+    'urban': pd.Series([8.8, 13, 40, 37, 11, 15, 44, 26] + [0.99] * 4 + [0.2] * 4 + [1.7] * 4),
+    'rural': pd.Series([0.7, 1.1, 3.7, 3.4, 1.6, 2, 3.8, 2.6] + [0.79] * 4 + [0.17] * 4 + [1.7] * 4),
+    'remote': pd.Series([0.04, 0.04, 0.04, 0.04, 0.1, 0.1, 0.1, 0.1] + [0.05] * 4 + [0.01] * 4 + [0.1] * 4),
+    'average': pd.Series([5, 7.5, 23, 21, 6.8, 6.8, 25, 15] + [0.89] * 4 + [0.18] * 4 + [1.7] * 4),
 })
 
 df = df.melt(id_vars=['Pollutant', 'Emission_height'], value_name='Value', var_name='Population_density')
@@ -314,6 +317,7 @@ metadata = {
     'references': {
         'General': 'Humbert et al. 2011 https://doi.org/10.1021/es103563z ' +
         'http://en.opasnet.org/w/Intake_fractions_of_PM#Data',
+        'Emission_height': 'The values for SO2, NOx, and NH3 apply to all emission heights.'
     }
 }
 
@@ -412,7 +416,7 @@ df = pd.DataFrame({
     'Erf_context': pd.Series([
         'dioxin cancer', 'dioxin tolerable_weekly_intake', 'omega3 chd_mortality', 'omega3 breast_cancer',
         'vitamin_D deficiency']),
-    'Period': pd.Series([80., 1, 80, 80, 1]),
+    'Period': pd.Series([80., 1, 80, 80, 1], dtype='pint[a / incident]'),
     'Route': pd.Series(['exposure'] * 2 + ['ingestion'] * 3),
     'Er_function': pd.Series(['unit risk', 'step function', 'relative Hill', 'relative risk', 'step function']),
     'exposure_m1': pd.Series([0.001, None, None, None, None], dtype='pint[kg d / pg]'),
@@ -473,10 +477,13 @@ df = pd.DataFrame({
         'omega3 breast_cancer',
         'vitamin_D deficiency',
         'PM2_5 mortality',
+        'PM2_5 work days lost',
+        'NOx mortality',
+        'PM10 chronic_bronchitis'
     ]),
     'Place': pd.Series(['default'] * 9),
     'Population': pd.Series(['default'] * 9),
-    'Incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1, 18496 / 5533793, 12, 18496 / 5533793, 390 / 100000], dtype='pint[cases/personyear]'),
+    'Incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1, 1363.8e-5, 12, 1363.8e-5, 390e-5], dtype='pint[cases/personyear]'),
 })
 
 metadata = {
@@ -501,24 +508,23 @@ metadata = {
             'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
         },
         'PM2_5 mortality': {
-            'Incidence': '18496 cases / (5533793 personyears) https://stat.fi/til/ksyyt/2020/ksyyt_2020_2021-12-10_tau_001_fi.html',
-            'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
-        },
-        'PM2_5 mortality': {
+            'Incidence': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
         },
         'PM2_5 work_days_lost': {
+            'Incidence': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': '0.099 DW * 0.00274 a, Heimtsa & Intarese http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
         },
         'NOx mortality': {
+            'Incidence': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': 'Same as PM2.5 De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
         },
-        'PM10 chronic bronchitis': {
+        'PM10 chronic_bronchitis': {
+            'Incidence': 'HRAPIE: SAPALDIA http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
         }
-
     }
 }
 
@@ -527,14 +533,86 @@ ds_incidence = Dataset(
     identifier='hia/incidence/default',
     metadata=metadata)
 
+# Traffic emissions and emission factors
+
+df = pd.read_csv('data/ALas_liikenne.csv')
+
+unit = {
+    'Emissions': 'kilotonnes',
+    'Energy_consumption': 'GWh',
+    'Mileage': 'Gm',
+    'Emission_factor_e': 'g / Wh',
+    'Emission_factor_m': 'g / m',
+    'Mileage_factor': 'Wh / m'
+}
+
+metadata = {
+    'references': {
+        'General': 'Data comes from the ALas model developed by the Finnish Environment Institute. Data loaded in January 2022. https://hiilineutraalisuomi.fi/fi-FI/Paastot_ja_indikaattorit/Kuntien_ja_alueiden_kasvihuonekaasupaastot',
+    },
+    'notes': {
+        'General': 'This data contains road transportation data only. It is a part of data /syke/alas_emissions but has more details.',
+        'Emissions': 'Emissions are kilotonnes CO2-equivalent.',
+    },
+}
+
+ds_traffic = Dataset(
+    df=df,
+    identifier='syke/alas_traffic',
+    units=unit,
+    metadata=metadata
+)
+
+df = pd.read_csv('data/efdb_eea_2019.csv')
+
+metadata = {
+    'notes': {
+        'General': 'The full EFDB dataset contains 13209 entries, of which ' +
+        '2841 are road transport data: 152 fuel consumptions and ' +
+        '2689 emission factors. Of the emission factors, 202 were ' +
+        'given per kg fuel used and 348 had units g/vehicle/d ' +
+        '(NMVOC from fuel evaporation); these 550 entries were excluded. ' +
+        'This left us with 19 emission factors about ' +
+        'road abrasion and tyre and break ware, and 2120 emission factors ' +
+        'about tailpipe emissions, i.e. 2139 emission factors that are ' +
+        'in this dataset. All are in units g/km.',
+        'Typical vehicles': {
+            'Personal gasoline car': 'Petrol Medium - Euro 5 – EC 715/2007',
+            'Personal diesel car': 'Diesel Medium - Euro 5 – EC 715/2007',
+            'Bus': 'Urban Buses Standard - Euro V - 2008',
+            'Motorbikes and mopeds': '4-stroke 250 - 750 cm³ - Conventional',
+            'Heavy-duty vehicles': 'Diesel 16 - 32 t - Euro IV - 2005',
+            'Light-duty vehicles': 'Diesel - Euro 5 – EC 715/2007',
+        },
+    },
+    'references': {
+        'General': 'EMEP/EEA air pollutant emission inventory guidebook 2019. http://efdb.apps.eea.europa.eu/'
+    }
+}
+
+unit = {
+    'Value': 'g / km',
+    'CI_lower': 'g / km',
+    'CI_upper': 'g / km'
+}
+
+ds_ef = Dataset(
+    df= df,
+    identifier='eea/efdb',
+    metadata=metadata
+)
+
 if False:
     repo.push_dataset(ds_act)
     repo.push_dataset(ds_noise)
-    repo.push_dataset(ds_if)
     repo.push_dataset(ds_tef)
     repo.push_dataset(ds_micr)
     repo.push_dataset(ds_indoor)
+    repo.push_dataset(ds_food)
+    repo.push_dataset(ds_noise)
+    repo.push_dataset(ds_if)
+    repo.push_dataset(ds_air)
+    repo.push_dataset(ds_incidence)
+    repo.push_dataset(ds_traffic)
 
-repo.push_dataset(ds_food)
-repo.push_dataset(ds_air)
-repo.push_dataset(ds_incidence)
+repo.push_dataset(ds_ef)
