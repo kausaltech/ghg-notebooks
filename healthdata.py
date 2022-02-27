@@ -72,17 +72,22 @@ df = pd.DataFrame({
     'Erf_context': pd.Series(['walking mortality', 'cycling mortality']),
     'Pollutant': pd.Series(['physical activity'] * 2),
     'Response': pd.Series(['mortality'] * 2),
+    'Case_burden': pd.Series([15.84386, 15.84386]),
     'Period': pd.Series([1., 1.]),
     'Er_function': pd.Series(['relative risk'] * 2),
     'exercise_m1': pd.Series([-0.0093653792] * 2),
+    'exercise_p1': pd.Series([0., 0]),
+    'exercise_p0': pd.Series([0.6, 0.6]),
 })
 
 unit = dict({
     'Velocity': 'km / h',
     'Metabolic_equivalent': 'METh / h',
     'Weekly_activity': 'day / week',
+    'Case_burden': 'DALY / case',
     'Period': 'a / incident',
     'exercise_m1': 'week / METh',
+    'exercise_p1': 'METh / week',
 })
 
 metadata = dict({
@@ -106,7 +111,9 @@ metadata = dict({
         'meta-analysis of reduction in all-cause mortality from walking and cycling and shape ' +
         'of dose response relationship. Int J Behav Nutr Phys Act 11, 132 (2014). ' +
         'https://doi.org/10.1186/s12966-014-0132-x',
-        'exercise_m1': 'log(0.9)/(11.25 METh/week)',
+        'Case_burden': 'Total YLL / total deaths in Finland according to Lehtomäki et al, 2021.',
+        'exercise_m1': 'beta: log(0.9)/(11.25 METh/week)',
+        'exercise_p0': 'rrmin: 0.6, the smallest relative risk plausible',
     }
 })
 
@@ -116,22 +123,48 @@ ds_act = Dataset(
     units=unit,
     metadata=metadata)
 
+## Exposure to physical activity
+
+df = pd.DataFrame({
+    'Age group': pd.Series(['20-49', '50-64', '65-79', '80-99'] * 2),
+    'Vehicle': pd.Series(['walking'] * 4 + ['cycling'] * 4),
+    'Active population fraction': pd.Series([0.48100, 0.44356, 0.41227, 0.34643, 0.07830, 0.07586, 0.04940, 0.03214]),
+    'Distance': pd.Series([1.06548, 0.95284, 0.95682, 1.06552, 9.64944, 10.25433, 8.76017, 5.20000], dtype='pint[km/d]'),
+})
+
+metadata = {
+    'references': {
+        'General': 'Liikennevirasto. 2018. Henkilöliikennetutkimus 2016. ' +
+        'Liikennevirasto, Liikenne ja maankäyttö. Helsinki 2018. Liikenneviraston ' +
+        'tilastoja 1/2018. https://julkaisut.vayla.fi/pdf8/lti_2018-01_henkiloliikennetutkimus_2016_web.pdf'
+    },
+    'notes': {
+        'General': 'The values are about the average situation in Finland in 2016 for different age groups.'
+    }
+}
+
+ds_phys_exposure = Dataset(
+    df=df,
+    identifier='hia/exposure/physical_activity_fi',
+    metadata=metadata
+)
 
 # Air pollution
 
 df = pd.DataFrame({
     'Erf_context': pd.Series([
-        'PM2_5 mortality',
-        'PM2_5 work_days_lost',
+        'PM2.5 mortality',
+        'PM2.5 work_days_lost',
         'NOx mortality',
         'PM10 chronic_bronchitis']),
-    'Pollutant': pd.Series(['PM2_5', 'PM2_5', 'NOx', 'PM10']),
+    'Pollutant': pd.Series(['PM2.5', 'PM2.5', 'NOx', 'PM10']),
     'Response': pd.Series(['mortality', 'work_days_lost', 'mortality', 'chronic_bronchitis']),
     'Period': pd.Series([1.] * 4),
     'Route': pd.Series(['inhalation'] * 4),
     'Er_function': pd.Series(['relative risk'] * 4),
     'inhalation_m1': pd.Series([0.007696104114, 0.00449733656, 0.0019802627, 0.0076961941]),
     'inhalation_p1': pd.Series([0.] * 4),
+    'inhalation_p0': pd.Series([1.] * 4),
     'Case_burden': pd.Series([10.6, 0.00027, 10.6, 0.99]),
     'Case_cost': pd.Series([0., 152, 0, 62712]),
 })
@@ -145,12 +178,12 @@ unit = dict({
 
 metadata = {
     'references': {
-        'PM2_5 mortality': {
+        'PM2.5 mortality': {
             'General': 'http://en.opasnet.org/w/ERF_of_outdoor_air_pollution',
             'Er_function': 'log(1.08)/10 Chen & Hoek, 2020',
-            'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
+            'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018',
         },
-        'PM2_5 work_days_lost': {
+        'PM2.5 work_days_lost': {
             'General': 'http://fi.opasnet.org/fi/Kiltova',
             'Er_function': 'log(1.046)/10 HRAPIE',
             'Case_burden': '0.099 DW * 0.00274 a, Heimtsa & Intarese http://fi.opasnet.org/fi/Kiltova#PAQ2018',
@@ -167,6 +200,9 @@ metadata = {
             'Case_burden': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
         }
+    },
+    'notes': {
+        'inhalation_p0': 'Assuming no protective effect even below threshold.',
     }
 }
 
@@ -186,7 +222,8 @@ df = pd.DataFrame({
     'Route': pd.Series(['inhalationBq']),
     'Er_function': pd.Series(['relative risk']),
     'inhalationBq_m1': pd.Series([0.0015987213636970735], dtype='pint[m**3 / Bq]'),
-    'inhalationBq_p1': pd.Series([0], dtype='pint[Bq / m**3]'),
+    'inhalationBq_p1': pd.Series([0.], dtype='pint[Bq / m**3]'),
+    'inhalationBq_p0': pd.Series([1.]),
 })
 
 metadata = {
@@ -194,6 +231,9 @@ metadata = {
         'General': 'http://en.opasnet.org/w/ERF_for_long-term_indoor_exposure_to_radon_and_lung_cancer ' + 
         'http://en.opasnet.org/w/ERFs_of_environmental_pollutants',
         'Er_function': 'log(1.0016) Darby 2005 http://www.bmj.com/cgi/content/full/330/7485/223'
+    },
+    'notes': {
+        'inhalationBq_p0': 'Assuming no protective effect even below threshold',
     }
 }
 
@@ -232,11 +272,17 @@ unit = dict({
     'noise_m1': '(Lden)**-1',
     'noise_m2': '(Lden)**-2',
     'noise_m3': '(Lden)**-3',
-    'Incidence': 'cases / a',
+    'Incidence': 'cases / personyear',
     'Case_burden': 'DALY / case',
 })
 
 metadata = {
+    'notes': {
+        'Population': 'Actual sum of the cities studied is 2085055 but here we ' +
+        'assume that noise exposure only occurs in the cities listed, and smaller ' +
+        'municipalities are free from transport noise. Thus, for Finland, we use ' +
+        'the year 2020 value for population in Finland: 5530000.'
+    },
     'references': {
         'General': 'http://fi.opasnet.org/fi/Liikenteen_terveysvaikutukset. For exposure data, ' +
         'see e.g. https://cdr.eionet.europa.eu/fi/eu/noise/df8/2017/envwjdfiq',
@@ -262,18 +308,18 @@ df = pd.DataFrame({
         'norovirus infection',
         'sapovirus infection',
         'cryptosporidium infection',
-        'EColiO157H7 infection',
+        'E.coli O157:H7 infection',
         'giardia infection']),
     'Pollutant': pd.Series(['campylobacter', 'rotavirus', 'norovirus', 'sapovirus',
-                            'cryptosporidium', 'EColiO15H7', 'giardia']),
+                            'cryptosporidium', 'E.coli O157:H7', 'giardia']),
     'Response': pd.Series(['infection'] * 7),
     'Period': pd.Series([1.] * 7),
     'Route': pd.Series(['ingestion'] * 7),
     'Er_function': pd.Series(['beta poisson approximation'] + ['exact beta poisson'] * 5 + ['exponential']),
     'Case_burden': pd.Series([0.002] * 7),
-    'ingestion_p1': pd.Series([0.011, 0.167, 0.04, 0.04, 0.115, 0.157, None]),
-    'ingestion_p1_2': pd.Series([None, 0.191, 0.055, 0.055, 0.176, 9.16, None]),
-    'ingestion_p0': pd.Series([0.024] + [None] * 6),
+    'ingestion_p0_2': pd.Series([None, 0.167, 0.04, 0.04, 0.115, 0.157, None]),
+    'ingestion_p0': pd.Series([0.024, 0.191, 0.055, 0.055, 0.176, 9.16, None]),
+    'ingestion_p1': pd.Series([0.011] + [None] * 6),
     'ingestion_m1': pd.Series([None] * 6 + [0.0199]),
 })
 
@@ -281,7 +327,6 @@ units = {
     'Period': 'days / incident',
     'Case_burden': 'DALY / case',
     'ingestion_p1': 'microbes / day',
-    'ingestion_p1_2': 'microbes / day',
     'ingestion_m1': 'day / microbes'
 }
 
@@ -303,7 +348,7 @@ ds_micr = Dataset(
 # Intake fractions
 
 df = pd.DataFrame({
-    'Pollutant': pd.Series(['PM10-2_5'] * 4 + ['PM2_5'] * 4 + ['SO2'] * 4 + ['NOx'] * 4 + ['NH3'] * 4),
+    'Pollutant': pd.Series(['PM10-2.5'] * 4 + ['PM2.5'] * 4 + ['SO2'] * 4 + ['NOx'] * 4 + ['NH3'] * 4),
     'Emission_height': pd.Series(['high', 'low', 'ground', 'average'] * 5),
     'urban': pd.Series([8.8, 13, 40, 37, 11, 15, 44, 26] + [0.99] * 4 + [0.2] * 4 + [1.7] * 4),
     'rural': pd.Series([0.7, 1.1, 3.7, 3.4, 1.6, 2, 3.8, 2.6] + [0.79] * 4 + [0.17] * 4 + [1.7] * 4),
@@ -424,6 +469,7 @@ df = pd.DataFrame({
     'exposure_p1_2': pd.Series([None, 2., None, None, None], dtype='pint[pg/kg/week]'),
     'ingestion_p1': pd.Series([None, None, 47, 0, 10e-3], dtype='pint[mg/d]'),
     'ingestion_p1_2': pd.Series([None, None, None, None, 100.], dtype='pint[ug/d]'),
+    'ingestion_p0': pd.Series([None, None, None, 0., None]),
     'ingestion_m1': pd.Series([None, None, None, -0.5129329439, None], dtype='pint[d/g]'),
     'ingestion_p0': pd.Series([None, None, -0.17, None, None]),
     'Case_burden': pd.Series([19.7, 0.0001, 10, 19.7, 0.001], dtype='pint[DALY/case]'),
@@ -476,14 +522,23 @@ df = pd.DataFrame({
         'omega3 chd_mortality',
         'omega3 breast_cancer',
         'vitamin_D deficiency',
-        'PM2_5 mortality',
-        'PM2_5 work days lost',
+        'PM2.5 mortality',
+        'PM2.5 work_days_lost',
         'NOx mortality',
-        'PM10 chronic_bronchitis'
-    ]),
-    'Place': pd.Series(['default'] * 9),
-    'Population': pd.Series(['default'] * 9),
-    'Incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1, 1363.8e-5, 12, 1363.8e-5, 390e-5], dtype='pint[cases/personyear]'),
+        'PM10 chronic_bronchitis',
+        'campylobacter infection',
+        'rotavirus infection',
+        'norovirus infection',
+        'sapovirus infection',
+        'cryptosporidium infection',
+        'E.coli O157:H7 infection',
+        'giardia infection',
+        'walking mortality',
+        'cycling mortality',
+     ]),
+    'Place': pd.Series(['default'] * 18),
+    'Population': pd.Series(['default'] * 18),
+    'Incidence': pd.Series([0.002927583, 1, 0.0033423729, 93.58e-5, 1, 1363.8e-5, 12, 1363.8e-5, 390e-5] + [1] * 7 + [1363.8e-5] * 2, dtype='pint[cases/personyear]'),
 })
 
 metadata = {
@@ -507,11 +562,11 @@ metadata = {
         'vitamin_D deficiency': {
             'Case_burden': 'http://en.opasnet.org/w/Goherr_assessment#Model_parameters',
         },
-        'PM2_5 mortality': {
+        'PM2.5 mortality': {
             'Incidence': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': 'De Leeuw & Horàlek 2016/5 http://fi.opasnet.org/fi/Kiltova#PAQ2018'
         },
-        'PM2_5 work_days_lost': {
+        'PM2.5 work_days_lost': {
             'Incidence': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': '0.099 DW * 0.00274 a, Heimtsa & Intarese http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
@@ -524,7 +579,10 @@ metadata = {
             'Incidence': 'HRAPIE: SAPALDIA http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_burden': 'http://fi.opasnet.org/fi/Kiltova#PAQ2018',
             'Case_cost': 'Holland et al., 2014'
-        }
+        },
+        'Microbes': {
+            'General':'Nominal value 1 case per personyear'
+        },
     }
 }
 
@@ -563,6 +621,8 @@ ds_traffic = Dataset(
     metadata=metadata
 )
 
+#### European emission factor database for air pollution
+
 df = pd.read_csv('data/efdb_eea_2019.csv')
 
 metadata = {
@@ -589,6 +649,8 @@ metadata = {
         'General': 'EMEP/EEA air pollutant emission inventory guidebook 2019. http://efdb.apps.eea.europa.eu/'
     }
 }
+df.Value.loc[df.Value == 'na'] = None
+df.Value.loc[df.Value == 'NC'] = None
 
 unit = {
     'Value': 'g / km',
@@ -599,20 +661,84 @@ unit = {
 ds_ef = Dataset(
     df= df,
     identifier='eea/efdb',
+    units=unit,
+    metadata=metadata
+)
+
+# Noise: exposed fraction and nominal exposures
+
+df = pd.read_csv('data/Health assessment data - Noise exposure.csv')
+
+metadata = {
+    'references': {
+        'General': 'http://fi.opasnet.org/fi/Liikenteen_terveysvaikutukset ' +
+        'Lehtomäki, H., Karvosenoja, N., Paunu, V-V., Korhonen, A., Hänninen, O., ' +
+        'Tuomisto, J., Karppinen, A., Kukkonen, J. & Tainio, M. 2021. Liikenteen ' +
+        'terveysvaikutukset Suomessa ja suurimmissa kaupungeissa. Suomen ympäristökeskuksen ' +
+        'raportteja 16/2021. http://hdl.handle.net/10138/329273',
+    }
+}
+
+ds_noise_fraction = Dataset(
+    df=df,
+    identifier='hia/exposure/noise_finland',
+    metadata=metadata
+)
+
+df = pd.DataFrame({
+    'Exposure level': pd.Series(['50-54', '55-59', '60-64', '65-69', '70-74', '>70', '>75']),
+    'Value': pd.Series([52, 57, 62, 67, 72, 72, 77.5], dtype='pint[Lden]')
+})
+
+metadata = {
+    'notes': 'These are nominal exposures of different noise level groups. The actual ' +
+    'exposure is given as fraction of population (frexposed) that belongs to each group. ' +
+    'Note that the unit is Lden although this is used for Lnight exposures as well. ' +
+    'The actual noise exposure unit must be derived from the context.'
+}
+
+ds_noise_nominal = Dataset(
+    df=df,
+    identifier='hia/exposure/noise_nominal',
+    metadata=metadata
+)
+
+### Water microbe concentrations
+
+df = pd.read_csv('data/Health assessment data - Water microbes.csv')
+
+unit = {
+    'Value': 'microbes/l'
+}
+
+metadata = {
+    'references': {
+        'General': 'http://en.opasnet.org/w/Water_guide'
+    }
+}
+
+ds_microbe_conc = Dataset(
+    df=df,
+    identifier='hia/concentration/water_microbes',
+    units=unit,
     metadata=metadata
 )
 
 if False:
-    repo.push_dataset(ds_act)
     repo.push_dataset(ds_noise)
     repo.push_dataset(ds_tef)
-    repo.push_dataset(ds_micr)
-    repo.push_dataset(ds_indoor)
-    repo.push_dataset(ds_food)
-    repo.push_dataset(ds_noise)
-    repo.push_dataset(ds_if)
-    repo.push_dataset(ds_air)
-    repo.push_dataset(ds_incidence)
     repo.push_dataset(ds_traffic)
+    repo.push_dataset(ds_ef)
+    repo.push_dataset(ds_if)
+    repo.push_dataset(ds_noise_nominal)
+    repo.push_dataset(ds_noise_fraction)
+    repo.push_dataset(ds_noise)
+    repo.push_dataset(ds_microbe_conc)
+    repo.push_dataset(ds_micr)
+    repo.push_dataset(ds_phys_exposure)
+    repo.push_dataset(ds_incidence)
 
-repo.push_dataset(ds_ef)
+repo.push_dataset(ds_act)
+repo.push_dataset(ds_air)
+repo.push_dataset(ds_indoor)
+repo.push_dataset(ds_food)
