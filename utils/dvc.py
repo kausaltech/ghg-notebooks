@@ -2,19 +2,19 @@ import dvc_pandas
 import settings  # noqa
 
 
-def get_repo():
+def get_repo(dvc_remote: str | None = None):
     return dvc_pandas.Repository(
         settings.DVC_PANDAS_REPOSITORY,
-        dvc_remote=settings.DVC_PANDAS_DVC_REMOTE,
+        dvc_remote=dvc_remote or settings.DVC_PANDAS_DVC_REMOTE,
     )
 
 
-def update_dataset(path, df):
+def update_dataset(path, df, dvc_remote: str | None = None):
     dataset = dvc_pandas.Dataset(
         df,
         identifier=path,
     )
-    repo = get_repo()
+    repo = get_repo(dvc_remote=dvc_remote)
     repo.push_dataset(dataset)
 
 
