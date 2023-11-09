@@ -6,6 +6,7 @@
 #
 aiobotocore[boto3]==2.4.0
     # via
+    #   aiobotocore
     #   dvc-s3
     #   s3fs
 aiohttp==3.8.3
@@ -477,7 +478,7 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.2
     # via stack-data
-pyarrow==9.0.0
+pyarrow==14.0.1
     # via
     #   dvc-pandas
     #   quilt
