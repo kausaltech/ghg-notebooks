@@ -6,6 +6,7 @@
 #
 aiobotocore[boto3]==2.4.0
     # via
+    #   aiobotocore
     #   dvc-s3
     #   s3fs
 aiohttp==3.8.3
@@ -119,7 +120,7 @@ contourpy==1.0.5
     # via matplotlib
 cramjam==2.5.0
     # via fastparquet
-cryptography==38.0.1
+cryptography==41.0.6
     # via asyncssh
 cufflinks==0.17.3
     # via -r requirements.in
