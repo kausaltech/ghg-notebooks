@@ -6,6 +6,7 @@
 #
 aiobotocore[boto3]==2.4.0
     # via
+    #   aiobotocore
     #   dvc-s3
     #   s3fs
 aiohttp==3.8.3
@@ -45,7 +46,7 @@ asttokens==2.0.8
     # via stack-data
 async-timeout==4.0.2
     # via aiohttp
-asyncssh==2.12.0
+asyncssh==2.14.2
     # via scmrepo
 atpublic==3.1.1
     # via flufl-lock
@@ -119,7 +120,7 @@ contourpy==1.0.5
     # via matplotlib
 cramjam==2.5.0
     # via fastparquet
-cryptography==38.0.1
+cryptography==41.0.7
     # via asyncssh
 cufflinks==0.17.3
     # via -r requirements.in
