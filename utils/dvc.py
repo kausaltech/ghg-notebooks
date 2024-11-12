@@ -1,11 +1,28 @@
+from __future__ import annotations
+
 import dvc_pandas
-import settings  # noqa
+
+import settings
 
 
 def get_repo(dvc_remote: str | None = None):
+    if settings.GITHUB_USERNAME and settings.GITHUB_DATASET_TOKEN:
+        creds = dvc_pandas.RepositoryCredentials(
+            git_username=settings.GITHUB_USERNAME,
+            git_token=settings.GITHUB_DATASET_TOKEN,
+        )
+    elif settings.GITHUB_SSH_PRIVATE_KEY and settings.GITHUB_SSH_PUBLIC_KEY:
+        creds = dvc_pandas.RepositoryCredentials(
+            git_ssh_private_key_file=str(settings.GITHUB_SSH_PRIVATE_KEY),
+            git_ssh_public_key_file=str(settings.GITHUB_SSH_PUBLIC_KEY),
+        )
+    else:
+        raise ValueError('No credentials for GitHub found')
     return dvc_pandas.Repository(
-        settings.DVC_PANDAS_REPOSITORY,
+        repo_url=settings.DVC_PANDAS_REPOSITORY,
         dvc_remote=dvc_remote or settings.DVC_PANDAS_DVC_REMOTE,
+        cache_prefix='ghg-notebooks',
+        repo_credentials=creds,
     )
 
 
