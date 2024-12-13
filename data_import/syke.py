@@ -11,8 +11,8 @@ from dvc_pandas.dataset import Dataset, DatasetMeta
 
 from utils.dvc import get_repo
 
-FNAME = Path('data/syke/KAIKKI KUNNAT_ALas 1.5_1990_2005-2022_LOPULLINEN_LOPULLINEN31052024_v2.xlsx')
-MODIFIED_AT = datetime.datetime(2024, 5, 31, tzinfo=datetime.UTC)
+FNAME = Path('~/data/syke/KAIKKI KUNNAT_ALas 1.6_1990_2005-2023e_FINAL.xlsx')
+MODIFIED_AT = datetime.datetime(2024, 12, 3, tzinfo=datetime.UTC)
 
 VAL_COLS = {
     'ktCO2e': 'Gg/a',
@@ -21,10 +21,11 @@ VAL_COLS = {
 }
 BOOL_COLS = ['hinku-laskenta', 'päästökauppa']
 MUNI_NUM_COL = 'kuntanumero'
+YEAR_COL = 'vuosi'
 
 def import_emissions():
     df = pl.read_excel(
-        'data/syke/KORJATTU_KAIKKI KUNNAT_ALas 1.5_1990_2005-2022.xlsx',
+        FNAME,
         sheet_name='DATA',
         has_header=True,
 
@@ -36,8 +37,8 @@ def import_emissions():
     with_cols: list[pl.Expr] = []
     remaining_cols = list(df.columns)
 
-    with_cols.append(pl.col('vuosi').cast(pl.Int32))
-    remaining_cols.remove('vuosi')
+    with_cols.append(pl.col(YEAR_COL).cast(pl.Int32))
+    remaining_cols.remove(YEAR_COL)
 
     with_cols.append(pl.col(MUNI_NUM_COL).cast(pl.Int32))
     remaining_cols.remove(MUNI_NUM_COL)
@@ -54,7 +55,7 @@ def import_emissions():
         units[col] = str(ureg.parse_units(unit))
         with_cols.append(col_def)
 
-    index_cols = ['vuosi']
+    index_cols = [YEAR_COL]
     for col in BOOL_COLS:
         with_cols.append(pl.col(col).replace_strict(['On', 'Ei'], [True, False], return_dtype=pl.Boolean))
         index_cols.append(col)
