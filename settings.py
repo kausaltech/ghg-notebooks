@@ -18,7 +18,7 @@ NUUKA_API_KEY = os.getenv("NUUKA_API_KEY")
 MML_API_KEY = os.getenv('MML_API_KEY')
 FMI_API_KEY = os.getenv('FMI_API_KEY')
 
-DVC_PANDAS_REPOSITORY = os.getenv('DVC_PANDAS_REPOSITORY', 'git@github.com:kausaltech/dvctest.git')
+DVC_PANDAS_REPOSITORY = os.getenv('DVC_PANDAS_REPOSITORY', 'https://github.com/kausaltech/dvctest.git')
 DVC_PANDAS_DVC_REMOTE = os.getenv('DVC_PANDAS_DVC_REMOTE', 'kausal-s3')
 
 def _path_from_env(name: str) -> Path | None:
