@@ -11,8 +11,8 @@ from dvc_pandas.dataset import Dataset, DatasetMeta
 
 from utils.dvc import get_repo
 
-FNAME = Path('~/data/syke/KAIKKI KUNNAT_ALas 1.6_1990_2005-2023e_FINAL.xlsx')
-MODIFIED_AT = datetime.datetime(2024, 12, 3, tzinfo=datetime.UTC)
+FNAME = Path('~/data/syke/KAIKKI KUNNAT_ALas 1.6_1990_2005-2023e_FINAL2.xlsx')
+MODIFIED_AT = datetime.datetime(2025, 1, 16, tzinfo=datetime.UTC)
 
 VAL_COLS = {
     'ktCO2e': 'Gg/a',
