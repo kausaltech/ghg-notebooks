@@ -274,9 +274,9 @@ def get_syke_data_df(data_dir: Path) -> pl.DataFrame:
     # Cast column types
     df = df.with_columns(
         pl.col("kuntanumero").cast(pl.Int32),
-        pl.col("ktCO2e").cast(pl.Float32),
-        pl.col("ktCO2e_tuuli").cast(pl.Float32),
-        pl.col("energiankulutus").cast(pl.Float32),
+        pl.col("ktCO2e").cast(pl.Float64),
+        pl.col("ktCO2e_tuuli").cast(pl.Float64),
+        pl.col("energiankulutus").cast(pl.Float64),
         pl.col("muni").cast(pl.Utf8),
         pl.col("vuosi").cast(pl.Int32),
         pl.col("hinku-laskenta").cast(pl.Boolean),
