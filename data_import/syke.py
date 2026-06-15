@@ -17,7 +17,7 @@ from utils.dvc import get_repo
 # When paastot.hiilineutraalisuomi.fi has updated its data the last time
 # Can be found out from "Last modified" timestamps in
 # https://paastot.hiilineutraalisuomi.fi/Tulokset_taso_5/
-MODIFIED_AT = datetime(2025, 5, 12, tzinfo=timezone.utc)
+MODIFIED_AT = datetime(2026, 6, 8, tzinfo=timezone.utc)
 DATASET_ID = "syke/alas_emissions"
 
 # Original data has abbreviations for the values in columns "taso_3", "taso_4"
@@ -139,7 +139,7 @@ _municipalities_info_df_cache: pl.DataFrame | None = None
 
 def get_municipalities_info_path(data_dir: Path) -> Path:
     """Get the path to the municipalities info file."""
-    return data_dir / "asukasluvut_2023.csv"
+    return data_dir / "kuntainfo_ja_asukasluvut.csv"
 
 
 def get_municipality_data_path(data_dir: Path, municipality_number: int) -> Path:
@@ -191,7 +191,7 @@ def download_data(data_dir: Path | None = None) -> Path:
         data_dir = Path(tempfile.mkdtemp())
 
     # Download the municipalities info
-    municipalities_info_url = "https://paastot.hiilineutraalisuomi.fi/asukasluvut_2023.csv"
+    municipalities_info_url = "https://paastot.hiilineutraalisuomi.fi/asukasluvut_2025.csv"
     municipalities_info_path = get_municipalities_info_path(data_dir)
     response = requests.get(municipalities_info_url)
     municipalities_info_path.write_text(response.content.decode('utf-8'))
